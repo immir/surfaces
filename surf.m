@@ -108,16 +108,8 @@ intrinsic Conics(PX::Sch :
     nk := #pivs;
     nvars := ni + nj + nk + 6 + 2;
 
-    AA := PolynomialRing(F, nvars, "grevlexw",
-                         [3^^6, 2^^2, 4^^(ni+nj+nk)]);
-
-    // this is helpful for debugging:
-    AssignNames(~AA, Split("alpha beta gamma delta epsilon phi x0 y0", " ")
-                     cat [ Sprintf("x%o", i) : i in [1..ni] ]
-                     cat [ Sprintf("y%o", i) : i in [1..nj] ]
-                     cat [ Sprintf("z%o", i) : i in [1..nk] ]);
-
-    q1,q2,q3,q4,q5,q6,x0,y0 := Explode([AA.i : i in [1..8]]);
+    AA<q1,q2,q3,q4,q5,q6,x0,y0> := PolynomialRing(F, nvars, "grevlexw",
+                                    [3^^6, 2^^2, 4^^(ni+nj+nk)]);
 
     vi := [ AA.(8+i)       : i in [1..ni]];
     vj := [ AA.(8+ni+i)    : i in [1..nj]];
