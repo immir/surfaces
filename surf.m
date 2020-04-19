@@ -2,6 +2,8 @@
 
 */
 
+declare verbose Surf, 3;
+
 // ----------------------------------------------------------------------
 // functional programming
 
@@ -87,7 +89,6 @@ intrinsic Conics(PX::Sch :
   k := n+1;
   AssignNames(~X, Names(CoordinateRing(PX))[1..n]);
   eqns_X := DefiningEquations(X);
-  eqns_X;
   
   H := ChangeRing(PolynomialRing(CoordinateRing(PX), n+1), Qbar);
 
@@ -96,7 +97,8 @@ intrinsic Conics(PX::Sch :
   solutions := { [H| f : f in DefiningEquations(Y) | Degree(f) eq 1 ]
                : Y in PrimeComponents(Scheme(PX, PX.(n+1)))
                | Dimension(Y) eq 1 and Degree(Curve(Y)) eq 2 };
-  printf "%o solutions at infinity\n", #solutions;
+
+  vprint Surf,1: "number of solutions at infinity: ", #solutions;
 
   for i in [1..n-1], j in [i+1..n] do
 
@@ -129,7 +131,7 @@ intrinsic Conics(PX::Sch :
        [ <r, j,   vj[r]>  : r in [1..nj]    ],
        [ <r, n+1, vk[r]>  : r in [1..nk]    ]]);
 
-    print ""; G;
+    vprint Surf, 2: G;
 
     A := q1*t^2 + q2 + q4*t;
     B := 2*q1*x0*t + 2*q2*y0 + q4*x0 + q4*y0*t + q5*t + q6;
@@ -162,24 +164,27 @@ intrinsic Conics(PX::Sch :
 
     eqns := &cat [ Eltseq(Numerator(e)) : e in eqns_t ];
 
-    #Set(eqns), nvars;
+    vprint Surf, 2: #Set(eqns), " equations, ", nvars, " variables";
 
     tm := Cputime();
-    time eqns_g := GroebnerBasis(eqns);
+    eqns_g := GroebnerBasis(eqns);
     tm := Cputime(tm);
+
 
     Y := Scheme(AffineSpace(AA), eqns_g);
     dim := Dimension(Y);
 
+    vprint Surf, 1: "Groebner complete, dim ", dim, " in ", tm, " seconds";
+
     if dim eq -1 then
-      print "dimension -1: no solutions";
+      vprint Surf, 2: "dimension -1: no solutions";
       continue;
     end if;
 
     if dim eq 0 then
 
       pts := RationalPoints(Y, Qbar);
-      printf "dimension 0: %o points\n", #pts;
+      vprint Surf, 2: "dimension 0, number of points:", #pts;
 
       // now, extract the Grassmanian component to get the hyperplanes
 
