@@ -1,5 +1,5 @@
 # surfaces
 
-This repo contains code for computing conics on surfaces and
+This repo contains Magma code for computing conics on surfaces and
 other varieties.
 
