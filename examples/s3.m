@@ -2,7 +2,6 @@
 SetEchoInput(true);
 Attach("surf.m");
 
-
 P5<a,b,c,k,l,m> := ProjectiveSpace(Rationals(), 5);
 S3 := Scheme(P5, [
    4*k^2 - (2*b^2 + 2*c^2 - a^2),
