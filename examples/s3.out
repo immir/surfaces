@@ -1,0 +1,232 @@
+Magma V2.25-4     Mon Apr 20 2020 11:32:12 on thinkpad [Seed = 450412389]
+Type ? for help.  Type <Ctrl>-D to quit.
+> Attach("surf.m");
+> 
+> 
+> P5<a,b,c,k,l,m> := ProjectiveSpace(Rationals(), 5);
+> S3 := Scheme(P5, [
+>    4*k^2 - (2*b^2 + 2*c^2 - a^2),
+>    4*l^2 - (2*c^2 + 2*a^2 - b^2),
+>    4*m^2 - (2*a^2 + 2*b^2 - c^2) ]);
+> 
+> time C := Conics(S3);
+Time: 2.140
+> #C;
+32
+> [ MinimalBasis(X) : X in C ];
+[
+    [
+        c - r2*l,
+        b - r2*m,
+        a - r2*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c + r10*m,
+        b - r10*l,
+        a - r10*k,
+        k^2 + l^2 + m^2
+    ],
+    [
+        c - r10*m,
+        b + r10*l,
+        a + r10*k,
+        k^2 + l^2 + m^2
+    ],
+    [
+        c - r2*m,
+        b + r2*k,
+        a - r2*l,
+        k^2 + l^2 - 2*m^2
+    ],
+    [
+        c - r2*m,
+        b - r2*k,
+        a + r2*l,
+        k^2 + l^2 - 2*m^2
+    ],
+    [
+        c - r2*m,
+        b + r2*k,
+        a + r2*l,
+        k^2 + l^2 - 2*m^2
+    ],
+    [
+        c + r2*m,
+        b - r2*k,
+        a - r2*l,
+        k^2 + l^2 - 2*m^2
+    ],
+    [
+        c + r2*m,
+        b + r2*k,
+        a - r2*l,
+        k^2 + l^2 - 2*m^2
+    ],
+    [
+        c + r2*m,
+        b - r2*k,
+        a + r2*l,
+        k^2 + l^2 - 2*m^2
+    ],
+    [
+        c + r2*m,
+        b + r2*k,
+        a + r2*l,
+        k^2 + l^2 - 2*m^2
+    ],
+    [
+        c - r2*m,
+        b - r2*k,
+        a - r2*l,
+        k^2 + l^2 - 2*m^2
+    ],
+    [
+        c + r2*k,
+        b + r2*l,
+        a - r2*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c - r2*k,
+        b + r2*l,
+        a - r2*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c - r2*k,
+        b - r2*l,
+        a - r1*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c + r2*l,
+        b - r2*m,
+        a + r2*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c - r2*l,
+        b - r2*m,
+        a + r2*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c - r2*l,
+        b + r2*m,
+        a + r2*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c + r2*l,
+        b + r2*m,
+        a + r2*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c + r2*l,
+        b + r2*m,
+        a - r2*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c - r2*l,
+        b + r2*m,
+        a - r2*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c + r2*l,
+        b - r2*m,
+        a - r2*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c + r2*k,
+        b - r2*l,
+        a - r1*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c + r2*k,
+        b + r2*l,
+        a - r1*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c - r2*k,
+        b + r2*l,
+        a - r1*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c - r2*k,
+        b - r2*l,
+        a - r2*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c + r2*k,
+        b - r2*l,
+        a - r2*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c + r10*m,
+        b - r10*l,
+        a + r10*k,
+        k^2 + l^2 + m^2
+    ],
+    [
+        c + r10*m,
+        b + r10*l,
+        a - r10*k,
+        k^2 + l^2 + m^2
+    ],
+    [
+        c + r10*m,
+        b + r10*l,
+        a + r10*k,
+        k^2 + l^2 + m^2
+    ],
+    [
+        c - r10*m,
+        b - r10*l,
+        a - r10*k,
+        k^2 + l^2 + m^2
+    ],
+    [
+        c - r10*m,
+        b - r10*l,
+        a + r10*k,
+        k^2 + l^2 + m^2
+    ],
+    [
+        c - r10*m,
+        b + r10*l,
+        a - r10*k,
+        k^2 + l^2 + m^2
+    ]
+]
+> [ Dimension(X) : X in C ];
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+1, 1, 1, 1, 1, 1 ]
+> [ Degree(Curve(X)) : X in C ];
+[ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+2, 2, 2, 2, 2, 2 ]
+> 
+> QQ := BaseField(C[1]);
+> QQ.1, MinimalPolynomial(QQ.1);
+r1
+$.1^2 - 4/3
+> QQ.2, MinimalPolynomial(QQ.2);
+r2
+$.1^2 - 4/3
+> QQ.10, MinimalPolynomial(QQ.10);
+r10
+$.1^2 + 4/3
+> 
+> 
+> 
+
+Total time: 2.200 seconds, Total memory usage: 32.09MB
