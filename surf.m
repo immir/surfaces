@@ -49,30 +49,42 @@ end intrinsic;
 // ----------------------------------------------------------------------
 // Lines
 
-intrinsic Lines(PX::Sch :
+intrinsic Lines(S::Sch :
                 Qbar := AlgebraicClosure(Rationals()))
-                -> List, FldAC
+                -> List
 
-  { }
-  X := AffinePatch(PX, 1);
-  F := BaseField(X);
-  n := Dimension(AmbientSpace(X));
-  AssignNames(~X, Names(CoordinateRing(PX))[1..n]);
-  eqns_X := DefiningEquations(X);
-  eqns_X;
+  { Return a sequence of lines as subschemes of the projective 
+    variety S. }
 
-  H := ChangeRing(PolynomialRing(CoordinateRing(PX), n+1), Qbar);
+  schemes, params := LinesInScheme(S);
+  lines := [];
 
-  // first, any conics at infinity
+  n := Rank(CoordinateRing(S));
 
-  solutions := { [H| f : f in DefiningEquations(Y) | Degree(f) eq 1 ]
-               : Y in PrimeComponents(Scheme(PX, PX.(n+1)))
-               | Dimension(Y) eq 1 and Degree(Curve(Y)) eq 1 };
+  SS := ChangeRing(S, Qbar);
+  RR := CoordinateRing(SS);
+  AssignNames(~RR, Names(CoordinateRing(S)));
 
-  // TODO  
+  for j in [1..#schemes] do
+    scheme := schemes[j];
+    param  := params[j];
 
+    points := RationalPoints(scheme, Qbar);
 
-  return [* *];
+    for pt in points do
+
+      planes := Basis(Kernel(Transpose(Matrix(
+        [[ Evaluate(Evaluate(x,s), pt) : x in param ]
+          : s in [0,1]] ))));
+
+      eqns := [ &+ [ SS.i * Eltseq(v)[i] : i in [1..n]] : v in planes ];
+      Append(~lines, Scheme(SS, eqns));
+    end for;
+      
+  end for;
+
+  return lines;
+
 end intrinsic;
 
 
