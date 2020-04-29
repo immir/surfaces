@@ -220,9 +220,10 @@ intrinsic Conics(PX::Sch :
                  - H.(n+1) * Evaluate(G[r][n+1], pt)
               where p is pivs[r] : r in [1..#pivs] ]
            cat
-            [ (v*QH,v) // the actual conic equation recovered
-                  where QH is ChangeRing(Evaluate(Q, Eltseq(pt)), H)
-                  where v is Vector([H.i, H.j, H.k]) ]
+            [ f // f / LeadingCoefficient(f)
+             where f is (v*QH,v) // the actual conic equation recovered
+             where QH is ChangeRing(Evaluate(Q, Eltseq(pt)), H)
+             where v is Vector([H.i, H.j, H.k]) ]
            : pt in pts };
 
     end if;
