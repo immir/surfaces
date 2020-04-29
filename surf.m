@@ -302,8 +302,10 @@ intrinsic Cubics(PX::Sch :
 
     vprint Surf, 2: G;
 
-    A := 2; // q1*t^2 + q2 + q4*t;
-    B := 2; // q1*x0*t + 2*q2*y0 + q4*x0 + q4*y0*t + q5*t + q6;
+    A := -(q5 + q6*t + q7*t^2);
+    B := q1 + q2*t + q3*t^2 + q4*t^3;
+
+
 
     u := Vector([x0,y0,1]);
     Q := Matrix([[  q1,  q4/2, q5/2 ],
