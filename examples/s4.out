@@ -1,5 +1,4 @@
-Magma V2.25-4     Thu Apr 23 2020 08:56:35 on thinkpad [Seed = 
-2439971972]
+Magma V2.25-4     Wed Apr 29 2020 17:21:11 on thinkpad [Seed = 267942429]
 Type ? for help.  Type <Ctrl>-D to quit.
 
 Loading file "examples/s4.m"
@@ -11,7 +10,7 @@ Loading file "examples/s4.m"
 > S := Veronese(S4);
 > 
 > time C := Conics(S);
-Time: 1.060
+Time: 1.090
 > #C;
 8
 > [ MinimalBasis(X) : X in C ];
@@ -78,4 +77,4 @@ Time: 1.060
 > [ Degree(Curve(X)) : X in C ];
 [ 2, 2, 2, 2, 2, 2, 2, 2 ]
 
-Total time: 1.119 seconds, Total memory usage: 32.09MB
+Total time: 1.179 seconds, Total memory usage: 32.09MB
