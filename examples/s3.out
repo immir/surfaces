@@ -1,7 +1,8 @@
-Magma V2.25-4     Mon Apr 20 2020 11:32:12 on thinkpad [Seed = 450412389]
+Magma V2.25-4     Thu Apr 30 2020 14:51:41 on thinkpad [Seed = 451812636]
 Type ? for help.  Type <Ctrl>-D to quit.
+
+Loading file "examples/s3.m"
 > Attach("surf.m");
-> 
 > 
 > P5<a,b,c,k,l,m> := ProjectiveSpace(Rationals(), 5);
 > S3 := Scheme(P5, [
@@ -10,16 +11,112 @@ Type ? for help.  Type <Ctrl>-D to quit.
 >    4*m^2 - (2*a^2 + 2*b^2 - c^2) ]);
 > 
 > time C := Conics(S3);
-Time: 2.140
+Time: 12.500
 > #C;
 32
 > [ MinimalBasis(X) : X in C ];
 [
     [
-        c - r2*l,
-        b - r2*m,
-        a - r2*k,
+        c + r1*l,
+        b + r1*m,
+        a + r1*k,
         k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c - r1*k,
+        b + r1*l,
+        a + r1*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c + r1*k,
+        b + r1*l,
+        a + r1*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c + r1*k,
+        b - r1*l,
+        a - r1*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c - r1*k,
+        b - r1*l,
+        a - r1*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c - r1*k,
+        b + r1*l,
+        a - r1*m,
+        k^2 - 2*l^2 + m^2
+    ],
+    [
+        c - r1*l,
+        b + r1*m,
+        a + r1*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c + r1*l,
+        b - r1*m,
+        a + r1*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c - r1*l,
+        b - r1*m,
+        a + r1*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c - r1*l,
+        b - r1*m,
+        a - r1*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c + r1*l,
+        b - r1*m,
+        a - r1*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c + r1*l,
+        b + r1*m,
+        a - r1*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c - r1*l,
+        b + r1*m,
+        a - r1*k,
+        k^2 - 1/2*l^2 - 1/2*m^2
+    ],
+    [
+        c - r1*m,
+        b + r1*k,
+        a - r1*l,
+        k^2 + l^2 - 2*m^2
+    ],
+    [
+        c - r1*m,
+        b - r1*k,
+        a + r1*l,
+        k^2 + l^2 - 2*m^2
+    ],
+    [
+        c - r1*m,
+        b + r1*k,
+        a + r1*l,
+        k^2 + l^2 - 2*m^2
+    ],
+    [
+        c + r1*m,
+        b - r1*k,
+        a + r1*l,
+        k^2 + l^2 - 2*m^2
     ],
     [
         c + r10*m,
@@ -34,141 +131,45 @@ Time: 2.140
         k^2 + l^2 + m^2
     ],
     [
-        c - r2*m,
-        b + r2*k,
-        a - r2*l,
+        c + r1*m,
+        b + r1*k,
+        a - r1*l,
         k^2 + l^2 - 2*m^2
     ],
     [
-        c - r2*m,
-        b - r2*k,
-        a + r2*l,
+        c + r1*m,
+        b - r1*k,
+        a - r1*l,
         k^2 + l^2 - 2*m^2
     ],
     [
-        c - r2*m,
-        b + r2*k,
-        a + r2*l,
+        c - r1*m,
+        b - r1*k,
+        a - r1*l,
         k^2 + l^2 - 2*m^2
     ],
     [
-        c + r2*m,
-        b - r2*k,
-        a - r2*l,
+        c + r1*m,
+        b + r1*k,
+        a + r1*l,
         k^2 + l^2 - 2*m^2
     ],
     [
-        c + r2*m,
-        b + r2*k,
-        a - r2*l,
-        k^2 + l^2 - 2*m^2
-    ],
-    [
-        c + r2*m,
-        b - r2*k,
-        a + r2*l,
-        k^2 + l^2 - 2*m^2
-    ],
-    [
-        c + r2*m,
-        b + r2*k,
-        a + r2*l,
-        k^2 + l^2 - 2*m^2
-    ],
-    [
-        c - r2*m,
-        b - r2*k,
-        a - r2*l,
-        k^2 + l^2 - 2*m^2
-    ],
-    [
-        c + r2*k,
-        b + r2*l,
-        a - r2*m,
+        c - r1*k,
+        b - r1*l,
+        a + r1*m,
         k^2 - 2*l^2 + m^2
     ],
     [
-        c - r2*k,
-        b + r2*l,
-        a - r2*m,
+        c + r1*k,
+        b - r1*l,
+        a + r1*m,
         k^2 - 2*l^2 + m^2
     ],
     [
-        c - r2*k,
-        b - r2*l,
+        c + r1*k,
+        b + r1*l,
         a - r1*m,
-        k^2 - 2*l^2 + m^2
-    ],
-    [
-        c + r2*l,
-        b - r2*m,
-        a + r2*k,
-        k^2 - 1/2*l^2 - 1/2*m^2
-    ],
-    [
-        c - r2*l,
-        b - r2*m,
-        a + r2*k,
-        k^2 - 1/2*l^2 - 1/2*m^2
-    ],
-    [
-        c - r2*l,
-        b + r2*m,
-        a + r2*k,
-        k^2 - 1/2*l^2 - 1/2*m^2
-    ],
-    [
-        c + r2*l,
-        b + r2*m,
-        a + r2*k,
-        k^2 - 1/2*l^2 - 1/2*m^2
-    ],
-    [
-        c + r2*l,
-        b + r2*m,
-        a - r2*k,
-        k^2 - 1/2*l^2 - 1/2*m^2
-    ],
-    [
-        c - r2*l,
-        b + r2*m,
-        a - r2*k,
-        k^2 - 1/2*l^2 - 1/2*m^2
-    ],
-    [
-        c + r2*l,
-        b - r2*m,
-        a - r2*k,
-        k^2 - 1/2*l^2 - 1/2*m^2
-    ],
-    [
-        c + r2*k,
-        b - r2*l,
-        a - r1*m,
-        k^2 - 2*l^2 + m^2
-    ],
-    [
-        c + r2*k,
-        b + r2*l,
-        a - r1*m,
-        k^2 - 2*l^2 + m^2
-    ],
-    [
-        c - r2*k,
-        b + r2*l,
-        a - r1*m,
-        k^2 - 2*l^2 + m^2
-    ],
-    [
-        c - r2*k,
-        b - r2*l,
-        a - r2*m,
-        k^2 - 2*l^2 + m^2
-    ],
-    [
-        c + r2*k,
-        b - r2*l,
-        a - r2*m,
         k^2 - 2*l^2 + m^2
     ],
     [
@@ -220,7 +221,7 @@ Time: 2.140
 r1
 $.1^2 - 4/3
 > QQ.2, MinimalPolynomial(QQ.2);
-r2
+-r1
 $.1^2 - 4/3
 > QQ.10, MinimalPolynomial(QQ.10);
 r10
@@ -229,4 +230,4 @@ $.1^2 + 4/3
 > 
 > 
 
-Total time: 2.200 seconds, Total memory usage: 32.09MB
+Total time: 12.640 seconds, Total memory usage: 32.09MB
