@@ -12,3 +12,6 @@ time C := Conics(S);
 [ MinimalBasis(X) : X in C ];
 [ Dimension(X) : X in C ];
 [ Degree(Curve(X)) : X in C ];
+
+R := BaseRing(C[1]);
+R.4, MinimalPolynomial(R.4);

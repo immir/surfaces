@@ -29,6 +29,14 @@ intrinsic Seq (s) -> SeqEnum { }
   try return Eltseq(s); catch e; end try;
 end intrinsic;
 
+intrinsic '-' (a::SeqEnum, b::SeqEnum) -> SeqEnum {}
+  return [i : i in a | i notin b];
+end intrinsic;
+
+intrinsic '.' (a, b::SeqEnum) -> SeqEnum {}
+  return [ a.i : i in b ];
+end intrinsic;
+
 // ----------------------------------------------------------------------
 // Veronese map
 
@@ -91,7 +99,28 @@ end intrinsic;
 // ----------------------------------------------------------------------
 // Conics
 
-intrinsic Conics(PX::Sch :
+intrinsic Conics(S::Sch) -> {} {}
+  Qbar := AlgebraicClosure(Rationals());
+  P := AmbientSpace(S);
+  PP := ChangeRing(P, Qbar);
+  n := Dimension(P);
+  AssignNames(~PP, Names(CoordinateRing(P))[1..n+1]);
+  C := {};
+  for i in [1..n+1] do
+    cyc := Sym(n+1) ! ([i..n+1] cat [1..i-1]);
+    fore := P.(Eltseq(cyc));
+    back := PP.(Eltseq(cyc^-1));
+    CC := ConicsX(X : Qbar := Qbar)
+          where X is Scheme(P, [ Evaluate(f, fore) 
+                               : f in DefiningEquations(S) ]);
+    C join:= { Scheme(PP, [ Evaluate(f, back)
+                          : f in DefiningEquations(C) ]) : C in CC };
+  end for;
+  return Seq(C);
+end intrinsic;
+
+
+intrinsic ConicsX(PX::Sch :
                  Qbar := AlgebraicClosure(Rationals()))
            -> List, FldAC
   { }

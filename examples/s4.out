@@ -1,4 +1,5 @@
-Magma V2.25-4     Wed Apr 29 2020 17:21:11 on thinkpad [Seed = 267942429]
+Magma V2.25-4     Thu Apr 30 2020 14:49:08 on thinkpad [Seed = 
+1237143510]
 Type ? for help.  Type <Ctrl>-D to quit.
 
 Loading file "examples/s4.m"
@@ -10,15 +11,43 @@ Loading file "examples/s4.m"
 > S := Veronese(S4);
 > 
 > time C := Conics(S);
-Time: 1.090
+Time: 37.590
 > #C;
-8
+10
 > [ MinimalBasis(X) : X in C ];
 [
     [
         {a*c} + {b*c} - {c^2},
         {a*b} + {b^2} - {b*c},
         {a^2} - {b^2} + 2*{b*c} - {c^2},
+        {D},
+        {b^2}*{c^2} - {b*c}^2
+    ],
+    [
+        {c^2},
+        {b*c},
+        {a*c},
+        {D} - r4*{a^2} + r4*{b^2},
+        {a^2}*{b^2} - {a*b}^2
+    ],
+    [
+        {b*c},
+        {b^2},
+        {a*b},
+        {D} - r4*{a^2} + r4*{c^2},
+        {a^2}*{c^2} - {a*c}^2
+    ],
+    [
+        {b*c},
+        {b^2},
+        {a*b},
+        {D} + r4*{a^2} - r4*{c^2},
+        {a^2}*{c^2} - {a*c}^2
+    ],
+    [
+        {a*c} - {b*c} - {c^2},
+        {a*b} - {b^2} - {b*c},
+        {a^2} - {b^2} - 2*{b*c} - {c^2},
         {D},
         {b^2}*{c^2} - {b*c}^2
     ],
@@ -37,13 +66,6 @@ Time: 1.090
         {b^2}*{c^2} - {b*c}^2
     ],
     [
-        {a*c} - {b*c} - {c^2},
-        {a*b} - {b^2} - {b*c},
-        {a^2} - {b^2} - 2*{b*c} - {c^2},
-        {D},
-        {b^2}*{c^2} - {b*c}^2
-    ],
-    [
         {a*c} + {b*c} + {c^2},
         {a*b} + {b^2} + {b*c},
         {a^2} - {b^2} - 2*{b*c} - {c^2},
@@ -58,23 +80,21 @@ Time: 1.090
         {b^2}*{c^2} - {b*c}^2
     ],
     [
+        {c^2},
         {b*c},
-        {b^2},
-        {a*b},
-        {D} + r4*{a^2} - r4*{c^2},
-        {a^2}*{c^2} - {a*c}^2
-    ],
-    [
-        {b*c},
-        {b^2},
-        {a*b},
-        {D} - r4*{a^2} + r4*{c^2},
-        {a^2}*{c^2} - {a*c}^2
+        {a*c},
+        {D} + r4*{a^2} - r4*{b^2},
+        {a^2}*{b^2} - {a*b}^2
     ]
 ]
 > [ Dimension(X) : X in C ];
-[ 1, 1, 1, 1, 1, 1, 1, 1 ]
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]
 > [ Degree(Curve(X)) : X in C ];
-[ 2, 2, 2, 2, 2, 2, 2, 2 ]
+[ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ]
+> 
+> R := BaseRing(C[1]);
+> R.4, MinimalPolynomial(R.4);
+r4
+$.1^2 + 1/16
 
-Total time: 1.179 seconds, Total memory usage: 32.09MB
+Total time: 37.659 seconds, Total memory usage: 64.12MB
