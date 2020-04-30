@@ -104,7 +104,7 @@ intrinsic Conics(S::Sch) -> {} {}
   P := AmbientSpace(S);
   PP := ChangeRing(P, Qbar);
   n := Dimension(P);
-  AssignNames(~PP, Names(CoordinateRing(P))[1..n+1]);
+  AssignNames(~PP, Names(CoordinateRing(P)));
   C := {};
   for i in [1..n+1] do
     cyc := Sym(n+1) ! ([i..n+1] cat [1..i-1]);
