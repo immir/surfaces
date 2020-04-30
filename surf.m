@@ -298,7 +298,7 @@ intrinsic Cubics(PX::Sch :
   
   H := ChangeRing(PolynomialRing(CoordinateRing(PX), n+1), Qbar);
 
-  // first, any conics at infinity
+  // first, any cubics at infinity
 
   solutions := { [H| f : f in DefiningEquations(Y) | Degree(f) eq 1 ]
                : Y in PrimeComponents(Scheme(PX, PX.(n+1)))
@@ -331,36 +331,26 @@ intrinsic Cubics(PX::Sch :
 
     vprint Surf, 2: G;
 
-    A := -(q5 + q6*t + q7*t^2);
-    B := q1 + q2*t + q3*t^2 + q4*t^3;
-
-
-
-    u := Vector([x0,y0,1]);
-    Q := Matrix([[  q1,  q4/2, q5/2 ],
-                 [ q4/2,  q2,  q6/2 ],
-                 [ q5/2, q6/2,  q3  ]]);
+    B := -(q5 + q6*t + q7*t^2);
+    A := q1 + q2*t + q3*t^2 + q4*t^3;
 
     v := [Parent(A/B)| 0^^n ];
-    v[i] := x0 - t*B/A;
-    v[j] := y0 - B/A;
+    v[i] := B/A;
+    v[j] := t*B/A;
     for r in [1..#pivs] do
       p := pivs[r];
       v[p] := v[i] * G[r][i] + v[j] * G[r][j] + G[r][n+1];
     end for;
 
-    w := Vector([Parent(A/B)| 0^^(n+1)]);
-    w[i] := x0 - t*B/A;
-    w[j] := y0 - B/A;
-    w[k] := 1;
+    x := v[i] - x0;
+    y := v[j] - y0;
 
-    ww := w * Transpose(ChangeRing(G,Parent(B/A)));
-    assert &and [ ww[k] eq v[pivs[k]] : k in [1..#pivs]];
-    // assert &and [ ww[i] eq v[i] : i in [1..#Eltseq(ww)] ];
-    // assert &and [ ww[i] eq v[i] : i in [1..#v] ];
-
+    f := func<x,y | 
+      q1*x^3 + q2*x^2*y + q3*x*y^2 + q4*y^3 + q5*x^2 + q6*x*y + q7*y^2
+    >;
+    
     eqns_t := [ Evaluate(e,v) : e in eqns_X ] cat
-              [ (u*Q, u), Determinant(Q) - 1, x0 ];
+      [ f(x,y), q1-2,q2-1,q3-1,q4-1, x0];
 
     eqns := &cat [ Eltseq(Numerator(e)) : e in eqns_t ];
 
@@ -415,10 +405,12 @@ intrinsic Cubics(PX::Sch :
                  - H.j     * Evaluate(G[r][j],   pt)
                  - H.(n+1) * Evaluate(G[r][n+1], pt)
               where p is pivs[r] : r in [1..#pivs] ]
-           cat
-            [ (v*QH,v) // the actual conic equation recovered
+           cat [0]
+           /*
+            [ (v*QH,v) // the actual cubic equation recovered
                   where QH is ChangeRing(Evaluate(Q, Eltseq(pt)), H)
                   where v is Vector([H.i, H.j, H.k]) ]
+           */
            : pt in pts };
 
     end if;
@@ -429,14 +421,15 @@ intrinsic Cubics(PX::Sch :
 
   end for;
 
-  // our conics are defined over Qbar now
+  // our cubics are defined over Qbar now
 
   PPX := ChangeRing(PX, Qbar);
-  //RRX := CoordinateRing(PPX);
-  //AssignNames(~RRX, Names(CoordinateRing(PX)));
-  //rho := hom< H -> RRX | [ RRX.i : i in [1..n+1] ]>;
-  ret := SetToSequence({ Scheme(ProjectiveSpace(H), s)
-                       : s in solutions});
+  RRX := CoordinateRing(PPX);
+  AssignNames(~RRX, Names(CoordinateRing(PX)));
+  rho := hom< H -> RRX | [ RRX.i : i in [1..n+1] ]>;
+  ret := SetToSequence({ Scheme(PPX, [ rho(e) : e in s ])
+    : s in solutions });
+
   return ret, PPX;
 end intrinsic;
 
