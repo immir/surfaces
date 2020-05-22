@@ -57,9 +57,9 @@ end intrinsic;
 // ----------------------------------------------------------------------
 // Lines
 
-intrinsic Lines(S::Sch :
-                Qbar := AlgebraicClosure(Rationals()))
-                -> List
+AddAttribute(Sch, "over_closure");
+
+intrinsic Lines(S::Sch) -> List
 
   { Return a sequence of lines as subschemes of the projective 
     variety S. }
@@ -69,7 +69,15 @@ intrinsic Lines(S::Sch :
 
   n := Rank(CoordinateRing(S));
 
-  SS := ChangeRing(S, Qbar);
+  if assigned S`over_closure then
+    SS := S`over_closure;
+  else
+    Qbar := AlgebraicClosure(Rationals());
+    SS := ChangeRing(S, Qbar);
+    S`over_closure := SS;
+  end if;
+
+  Qbar := BaseRing(SS);
   RR := CoordinateRing(SS);
   AssignNames(~RR, Names(CoordinateRing(S)));
 
@@ -100,11 +108,19 @@ end intrinsic;
 // Conics
 
 intrinsic Conics(S::Sch) -> {} {}
-  Qbar := AlgebraicClosure(Rationals());
+
+  if assigned S`over_closure then
+    SS := S`over_closure;
+  else
+    Qbar := AlgebraicClosure(Rationals());
+    SS := ChangeRing(S, Qbar);
+    S`over_closure := SS;
+  end if;
+  Qbar := BaseRing(SS);
   P := AmbientSpace(S);
-  PP := ChangeRing(P, Qbar);
+  PP := SS;
   n := Dimension(P);
-  AssignNames(~PP, Names(CoordinateRing(P)));
+  //AssignNames(~PP, Names(CoordinateRing(P)));
   C := {};
   for i in [1..n+1] do
     cyc := Sym(n+1) ! ([i..n+1] cat [1..i-1]);
@@ -298,7 +314,7 @@ intrinsic Cubics(PX::Sch :
   
   H := ChangeRing(PolynomialRing(CoordinateRing(PX), n+1), Qbar);
 
-  // first, any cubics at infinity
+  // first, any cubics at infinity??
 
   solutions := { [H| f : f in DefiningEquations(Y) | Degree(f) eq 1 ]
                : Y in PrimeComponents(Scheme(PX, PX.(n+1)))
@@ -312,14 +328,13 @@ intrinsic Cubics(PX::Sch :
     ni := #{p : p in pivs | p lt i };
     nj := #{p : p in pivs | p lt j };
     nk := #pivs;
-    nvars := ni + nj + nk + 7 + 2;
+    nvars := ni + nj + nk + 10 + 2;
 
-    AA<q1,q2,q3,q4,q5,q6,q7,x0,y0> := PolynomialRing(F, nvars, "grevlexw",
-                                    [3^^7, 2^^2, 4^^(ni+nj+nk)]);
+AA<q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,x0,y0> := PolynomialRing(F, nvars, "grevlexw", [3^^10, 2^^2, 4^^(ni+nj+nk)]);
 
-    vi := [ AA.(9+i)       : i in [1..ni]];
-    vj := [ AA.(9+ni+i)    : i in [1..nj]];
-    vk := [ AA.(9+ni+nj+i) : i in [1..nk]];
+    vi := [ AA.(12+i)       : i in [1..ni]];
+    vj := [ AA.(12+ni+i)    : i in [1..nj]];
+    vk := [ AA.(12+ni+nj+i) : i in [1..nk]];
 
     RR<t> := PolynomialRing(AA);
 
@@ -331,26 +346,27 @@ intrinsic Cubics(PX::Sch :
 
     vprint Surf, 2: G;
 
-    B := -(q5 + q6*t + q7*t^2);
-    A := q1 + q2*t + q3*t^2 + q4*t^3;
+    A := -(q1 + q2*t + q3*t^2 + q4*t^3);
+    B := 3*q1*x0 + 2*q2*x0*t + q2*y0 + q3*x0*t^2 + 2*q3*y0*t 
+         + 3*q4*y0*t^2 + q5 + q6*t + q7*t^2;
 
     v := [Parent(A/B)| 0^^n ];
-    v[i] := B/A;
-    v[j] := t*B/A;
+    v[i] := x0 + B/A;
+    v[j] := y0 + t*B/A;
     for r in [1..#pivs] do
       p := pivs[r];
       v[p] := v[i] * G[r][i] + v[j] * G[r][j] + G[r][n+1];
     end for;
 
-    x := v[i] - x0;
-    y := v[j] - y0;
-
     f := func<x,y | 
-      q1*x^3 + q2*x^2*y + q3*x*y^2 + q4*y^3 + q5*x^2 + q6*x*y + q7*y^2
-    >;
+      q1*x^3 + q2*x^2*y + q3*x*y^2 + q4*y^3 +
+      q5*x^2 + q6*x*y + q7*y^2 +
+      q8*x + q9*y + q10 >;
     
-    eqns_t := [ Evaluate(e,v) : e in eqns_X ] cat
-      [ f(x,y), q1-2,q2-1,q3-1,q4-1, x0];
+    eqns_t := [ Evaluate(e,v) : e in eqns_X ] 
+      cat [ f(v[i],v[j]),
+            Derivative(f(x0,y0),x0),
+            Derivative(f(x0,y0),y0) ];
 
     eqns := &cat [ Eltseq(Numerator(e)) : e in eqns_t ];
 
@@ -365,6 +381,7 @@ intrinsic Cubics(PX::Sch :
     dim := Dimension(Y);
 
     vprint Surf, 1: "Groebner complete, dim ", dim, " in ", tm, " seconds";
+
 
     if dim eq -1 then
       vprint Surf, 2: "dimension -1: no solutions";
@@ -417,6 +434,7 @@ intrinsic Cubics(PX::Sch :
 
     if dim gt 0 then
       printf "dimension %o: infinite\n", dim;
+      return Y;
     end if;
 
   end for;
