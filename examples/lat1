@@ -5,18 +5,30 @@ L := Lattice(LatticeDatabase(), "E8");
 Determinant(L); // unimodular
 
 S := sub< L | [0,1,0,0,0,0,0,1], [1,1,0,0,0,0,2,0] >;
+GramMatrix(S);
 T := LatticePerp(L, S);
 
 LL := S + T;
 Determinant(LL); // not unimodular
-G_L,LLdual,rho := DualQuotient(LL);
-G_L;
+G,LLdual,rho := DualQuotient(LL);
+G;
 LLdual;
 
-q_L := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho) >;
-q_L(G_L.1);
-q_L(G_L.2);
-q_L(G_L.3);
-q_L(G_L.4);
+q := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho) >;
+q(G.1);
+q(G.2);
+q(G.3);
+q(G.4);
 
-{* q_L(x) : x in G_L *};
+{* q(x) : x in G *};
+
+b := func< x,y | Sign(z)*(Abs(z) - Truncate(Abs(z)))
+                    where z is 1/2*(q(x+y) - q(x) - q(y)) >;
+
+GCD(Order(G.1), Order(4*G.3));
+b(G.1, 4*G.3);
+
+A := AutomorphismGroup(G);
+exists(a){ a : a in Generators(A) |
+           { q(x) eq q(x @ a) : x in G } eq { true } };
+a; // an isometry!
