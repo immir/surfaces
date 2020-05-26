@@ -29,6 +29,5 @@ GCD(Order(G.1), Order(4*G.3));
 b(G.1, 4*G.3);
 
 A := AutomorphismGroup(G);
-exists(a){ a : a in Generators(A) |
-           { q(x) eq q(x @ a) : x in G } eq { true } };
+exists(a){ a : a in Generators(A) | &and { q(x) eq q(x @ a) : x in G } };
 a; // an isometry!
