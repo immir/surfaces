@@ -1,4 +1,6 @@
 
+Attach("surf.m");
+
 L := Lattice(LatticeDatabase(), "E8");
 Determinant(L); // unimodular
 
