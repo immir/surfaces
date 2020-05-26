@@ -1,0 +1,20 @@
+
+L := Lattice(LatticeDatabase(), "E8");
+Determinant(L); // unimodular
+
+S := sub< L | [0,1,0,0,0,0,0,1], [1,1,0,0,0,0,2,0] >;
+T := LatticePerp(L, S);
+
+LL := S + T;
+Determinant(LL); // not unimodular
+G_L,LLdual,rho := DualQuotient(LL);
+G_L;
+LLdual;
+
+q_L := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho) >;
+q_L(G_L.1);
+q_L(G_L.2);
+q_L(G_L.3);
+q_L(G_L.4);
+
+{* q_L(x) : x in G_L *};
