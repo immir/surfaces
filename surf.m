@@ -18,8 +18,7 @@ intrinsic compose(f, ...) -> UserProgram
   {} return compose(f); end intrinsic;
 intrinsic filter(f, xs) -> . {} return [ x : x in xs | f(x) ]; end intrinsic;
 
-intrinsic LatticePerp (L, S) -> {}
-  {}
+intrinsic LatticePerp (L, S) -> {} {}
   P := sub< L | Basis(NullspaceOfTranspose(Matrix(
      [[ (v,s) : v in Basis(L) ] : s in Basis(S) ]))) >;
   B := Basis(S) cat Basis(P);
