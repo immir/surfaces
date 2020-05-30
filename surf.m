@@ -25,6 +25,15 @@ intrinsic LatticePerp (L, S) -> {} {}
   return P, Matrix([[(u,v):u in B] : v in B]);
 end intrinsic;
 
+intrinsic '@' (A::Lat, B::Lat) -> {} {}
+  a := Rank(A);
+  n := Rank(A) + Rank(B);
+  M := ZeroMatrix(Integers(), n,n);
+  InsertBlock(~M, GramMatrix(A), 1,1);
+  InsertBlock(~M, GramMatrix(B), a+1,a+1);
+  return LatticeWithGram(M : CheckPositive := false);
+end intrinsic;
+
 
 // ----------------------------------------------------------------------
 // Seq
