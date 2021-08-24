@@ -6,18 +6,23 @@
 //        
 
 
+Attach("surf_latt.m"); // MJS surf package (renamed to avoid clash)
+                       // https://github.com/immir/surfaces/blob/master/surf.m
+
 //-----------------------------------------------------
 // --- define ADE and Leech lattices
 A  := func<n | Lattice("A",n)>;
 D  := func<n | Lattice("D",n)>;
 E  := func<n | Lattice("E",n)>;
-L  := func<n | Lattice("Lambda",n)>; // Leech is n=24
+LL := func<n | Lattice("Lambda",n)>; // Leech is n=24
 
 
 //-----------------------------------------------------
 // --- build a lattice w.r.t. abstract basis
-A2 := LatticeWithGram(GramMatrix(A(2)));
-A4 := LatticeWithGram(GramMatrix(A(4)));
+A2  := LatticeWithGram(GramMatrix(A(2)));
+A4  := LatticeWithGram(GramMatrix(A(4)));
+E6  := Lattice(LatticeDatabase(), "E6");
+E7  := Lattice(LatticeDatabase(), "E7");
 E8  := Lattice(LatticeDatabase(), "E8");
 E8b := LatticeWithGram(GramMatrix(E(8)));
 
@@ -38,7 +43,7 @@ print "L1 == L2            :", flag;
 
 
 //-----------------------------------------------------
-// --- compose indefinite lattices
+// --- compose indefinite lattices --- poor man's "@"
 Oplus := function(L,M)
 
   GL := GramMatrix(L);
@@ -120,26 +125,9 @@ end /* safe */ function;
 
 
 //-----------------------------------------------------
-// --- Embed T := T_{S3} into E8
-//
-T := LatticeWithGram(Matrix(Rationals(),2,2,[4,0,0,12]));
-print "T_X = ", GramMatrix(T);
-T2   := embed_into_E8(T);
-print "Gram(T) == Gram(T2) :",GramMatrix(sub<E8|T2>) eq GramMatrix(T); // sanity check
-
-
-// --- T0 == Orthogonal complement of T_{S3} in E8
-T2   := sub<E8 | T2>;
-T0   := LatticePerp( E8, T2 );
-print "Det(T2) == Det(T0)  :", Determinant(T2) eq Determinant(T0);
-
-
-// --- Did we get A2 (+) A3 (+) <4> 
-A2A3   := Oplus(A(2),A(3));
-L      := LatticeWithGram(Matrix(Rationals(),1,1,[4]) : CheckPositive := false);
-A2A3_4 := Oplus(A2A3,L);
-flag   := IsIsometric(T0,A2A3_4);
-print "A2A3<4> == T0       :", flag; // Yes we did !
+IsEvenMatrix := function(M)
+  return &and[IsEven(Integers()!M[i,i]) : i in [1..NumberOfRows(M)]];
+end /* safe */ function;
 
 
 //-----------------------------------------------------
@@ -162,6 +150,290 @@ end /* safe */ function;
 print "signature(H2) = (#+, #-) = ",signature(GramMatrix(H2));
 
 
+//-----------------------------------------------------
+coxeter_number := function(L)
+  return #ShortVectors(L,2)*5/60;
+end /* safe */ function;
+
+
+//-----------------------------------------------------
+rootlattice := function(L)
+  G := GramMatrix(L);
+  roots := ShortVectors(L,2);
+  r1 := sub < L | [r[1] : r in roots ] >;
+  return r1;
+end /* safe */ function;
+
+
+//-----------------------------------------------------
+// --- Embed T := T_{S3} into E8
+//
+T := LatticeWithGram(Matrix(Rationals(),2,2,[4,0,0,12]));
+print "T_X = ", GramMatrix(T);
+T2   := embed_into_E8(T);
+print "Gram(T) == Gram(T2) :",GramMatrix(sub<E8|T2>) eq GramMatrix(T); // sanity check
+
+
+// --- T0 == Orthogonal complement of T_{S3} in E8
+T2   := sub<E8 | T2>;
+T0   := LatticePerp( E8, T2 );
+print "Det(T2) == Det(T0)  :", Determinant(T2) eq Determinant(T0);
+
+
+// --- Did we get A2 (+) A3 (+) <4> 
+A2A3   := Oplus(A(2),A(3));
+L      := LatticeWithGram(Matrix(Rationals(),1,1,[4]) : CheckPositive := false);
+A2A3_4 := Oplus(A2A3,L);
+flag   := IsIsometric(T0,A2A3_4);
+print "A2A3<4> == T0       :", flag; // Yes we did !
+
+
+// --- Check conditions (i), (ii), (iii) on page 18 BKW
+print "(i) IsEven(T0)      :", IsEven(T0);
+G0 := GramMatrix(T0);
+print "(ii) signature(T0)  =",signature(G0);
+G_T,  T_star,  f_T   := DualQuotient(T);   // f_T  : T*  --> G_T
+G_T0, T0_star, f_T0  := DualQuotient(T0);  // f_T0 : T0* --> G_T0
+print "(iii) G_T == G_T0   :", IsIsomorphic(G_T, G_T0);
+
+print "\n****** We really need to show that (G_T, qf_T) is isometric to (G_T0, qf_T0) !";
+
+// Try this ... Immir
+_, T_T0 := IsIsomorphic(G_T, G_T0); // map : G_T --> G_T0
+
+q_T  := QuadraticForm(T);
+q_T0 := QuadraticForm(T0);
+
+print "1: ",T_T0(G_T.1) eq G_T0.1; // isomorphic generators
+print "1: ",T_T0(G_T.2) eq G_T0.2; // isomorphic generators
+print "1: ",G_T0.1 @@ T_T0; // preimage
+
+print "2: ",G_T.1 @@ f_T; // preimages
+print "2: ",G_T.2 @@ f_T; // preimages
+print "2: ", Matrix(Rationals(),2,2,[(G_T.i @@ f_T, G_T.j @@ f_T) : i,j in [1..2]]);
+
+print "3: ",G_T0.1 @@ f_T0;
+print "3: ",G_T0.2 @@ f_T0;
+print "3: ", Matrix(Rationals(),2,2,[(G_T0.i @@ f_T0, G_T0.j @@ f_T0) : i,j in [1..2]]);
+
+
+print "4: ", Matrix(Rationals(),2,2,[(T_T0(G_T.i) @@ f_T0, G_T0.j @@ f_T0) : i,j in [1..2]]);
+
+// --- DOH ... We got some 'splainin' to do
+/* Immir:
+
+   First, DualQuotient(L) can return the quotient group Q together
+   with the "unscaled dual lattice" L^# and "natural epimorphism"
+   phi: L^# -> Q. */
+
+G_T,Lx,phi    := DualQuotient(T);
+G_T0,Lx0,phi0 := DualQuotient(T0);
+
+/* G_T and G_T0 are isomorphic as abelian groups, but since
+   #Aut(G_T) = 192, there are 192 different isomorphisms between
+   them (for any given isomorphism, one can compose with an
+   automorphism to get another).
+
+   So, we can ask Magma for a given isomorphism: */
+
+_,rho := IsIsomorphic(G_T, G_T0);
+
+/*
+   But we need the isomorphism to preserve the inner product, so let's
+   check them all...
+
+   NB: Apparently you cannot iterate over the automorphism group A, so
+   we take a permutation representation for it and iterate over that, mapping
+   back to A using @@
+
+*/
+
+
+A := AutomorphismGroup(G_T);
+pi := PermutationRepresentation(A);
+
+// inner product on G_T:
+M := Matrix([[ (G_T.i @@ phi, G_T.j @@ phi) : i in [1,2]] : j in [1,2]]);
+
+print "Can we find an isomorphism preserving the form?";
+found := false;
+for p in Image(pi) do
+  rr := (p @@ pi) * rho;
+  // inner products of images of G_T in G_T0
+  M0 := Matrix([[ (rr(G_T.i) @@ phi0, rr(G_T.j) @@ phi0)
+                : i in [1,2]] : j in [1,2]]);
+  if M eq M0 then
+    print "found an isomorphism using perm:", p;
+    found := true;
+  end if;
+end for;
+
+// we get nothing
+if not found then
+  print "// we get nothing //";
+end if;
+
+//assert false cmpeq "aborting at this point";
+
+
+//-----------------------------------------------------
+// Construct all 24 Niemeier lattices 
+// D24 is a missing one in magma ... obtained from Gabby Nebe's site
+//          http://www.math.rwth-aachen.de/~Gabriele.Nebe/LATTICES/
+T24 := [*
+[2],
+[1, 2],
+[1, 1, 2],
+[1, 1, 1, 2],
+[1, 1, 1, 1, 2],
+[1, 1, 1, 1, 0, 2],
+[1, 1, 1, 1, 1, 1, 2],
+[1, 1, 1, 1, 1, 1, 1, 2],
+[1, 1, 1, 1, 1, 1, 1, 1, 2],
+[0, 0, 0, 0,-1, 1, 0, 0, 0, 2],
+[0, 0, 0, 0, 1,-1, 0, 0, 0,-1, 2],
+[0, 0, 0, 0, 1,-1, 0, 0, 0,-1, 1, 2],
+[0, 0, 0, 0, 1,-1, 0, 0, 0,-1, 1, 1, 2],
+[0, 0, 0, 0, 1,-1, 0, 0, 0,-1, 1, 1, 1, 2],
+[0, 0, 0, 0,-1, 1, 0, 0, 0, 1,-1,-1,-1,-1, 2],
+[0, 0, 0, 0, 1,-1, 0, 0, 0,-1, 1, 1, 1, 1,-1, 2],
+[0, 0, 0, 0, 1,-1, 0, 0, 0,-1, 1, 1, 1, 1,-1, 1, 2],
+[0, 0, 0, 0, 1,-1, 0, 0, 0,-1, 1, 1, 1, 1,-1, 1, 1, 2],
+[0, 0, 0, 0, 1,-1, 0, 0, 0,-1, 1, 1, 1, 1,-1, 1, 1, 1, 2],
+[0, 0, 0, 0, 1,-1, 0, 0, 0,-1, 1, 1, 1, 1,-1, 1, 1, 1, 1, 2],
+[0, 0, 0, 0, 1,-1, 0, 0, 0,-1, 1, 1, 1, 1,-1, 1, 1, 1, 1, 1, 2],
+[0, 0, 0, 0, 1,-1, 0, 0, 0,-1, 1, 1, 1, 1,-1, 1, 1, 1, 1, 1, 1, 2],
+[0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1,-1,-1,-1, 0,-1, 0,-1, 6],
+[0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0,-1,-1, 0,-1, 0,-1, 5, 6]
+*];
+
+D24 := ZeroMatrix(Integers(),24,24);
+for r in [1..24] do
+  for c in [1..r] do
+    D24[r,c] := T24[r][c];
+  end for;
+end for;
+U24 := Transpose(D24);
+for i in [1..24] do
+  U24[i][i] := 0;
+end for;
+D24 := D24 + U24;
+
+N_D24 := LatticeWithGram(D24);
+LDB   := LatticeDatabase();
+print "\n Niemeier lattices ...";
+for i in [1..#LDB] do
+  L := Lattice(LDB,i);
+  if IsEven(L) and Rank(L) eq 24 and Abs(Determinant(L)) eq 1 then
+    print <i,LatticeName(LDB,i)>;
+  end if;
+end for;
+
+print "Add in the one missing in magma, and the Leech lattice ...";
+N := [N_D24] cat [Lattice(LDB,i) : i in [448 .. 469]] cat [LL(24)];
+
+/*
+for i in [1..#N] do
+  L := N[i];
+  print <i,Determinant(L), signature(GramMatrix(L)), coxeter_number(L),Order(L/rootlattice(L))>;
+end for;
+*/
+
+// --- Create a mapping to Table 2 of the BKW paper (page 20)
+//
+BKW_Table1 := AssociativeArray(Strings());
+BKW_Table1["alpha"]   := "N(D24)";
+BKW_Table1["beta"]    := "N(D16_E8)";
+BKW_Table1["gamma"]   := "N(3E8)";
+BKW_Table1["delta"]   := "N(A24)";
+BKW_Table1["epsilon"] := "N(2D12)";
+BKW_Table1["zeta"]    := "N(A17_E7)";
+BKW_Table1["eta"]     := "N(D10_2E7)";
+BKW_Table1["theta"]   := "N(A15_D9)";
+BKW_Table1["iota"]    := "N(3D8)";
+BKW_Table1["kappa"]   := "N(2A12)";
+BKW_Table1["lambda"]  := "N(A11_D7_E6)";
+BKW_Table1["mu"]      := "N(4E6)";
+BKW_Table1["nu"]      := "N(2A9_D6)";
+BKW_Table1["xi"]      := "N(4D6)";
+BKW_Table1["omicron"] := "N(3A8)";
+BKW_Table1["pi"]      := "N(2A7_2D5)";
+BKW_Table1["rho"]     := "N(4A6)";
+BKW_Table1["sigma"]   := "N(4A5_D4)";
+BKW_Table1["tau"]     := "N(6D4)";
+BKW_Table1["upsilon"] := "N(6A4)";
+BKW_Table1["phi"]     := "N(8A3)";
+BKW_Table1["chi"]     := "N(12A2)";
+BKW_Table1["psi"]     := "N(24A1)";
+NL := func< str | Lattice(LDB, BKW_Table1[str])>;
+N[12] eq NL("rho"); // *sigh* need to fix alpha since it is not in Magma DB!
+
+
+
+
+//-----------------------------------------------------
+// --- embed 6x6 positive definite matrix into a Niemeier lattice  
+//
+embed_into_Niemeier := function(L,NL)
+
+  // --- compute the sets of vectors of each possible diagonal of GramMatrix(L)
+  norms := [Norm(a) : a in Basis(L)];
+  vec_len := AssociativeArray(Integers());
+  for norm in norms do
+    vecs := ShortVectors(NL,norm);
+    vecs := [v[1] : v in vecs | v[2] eq norm];
+    vec_len[norm] := vecs;
+  end for;
+
+  // --- exhaust over each diagonal list
+  G_L := GramMatrix(L);
+  for v1 in vec_len[norms[1]] do
+    for v2 in vec_len[norms[2]] do
+      basis := [v1,v2];
+      if InnerProduct(v1,v2) eq G_L[1][2] then
+        for v3 in vec_len[norms[3]] do
+          basis := [v1,v2,v3];
+          flag  := &and[(basis[i],v3) eq G_L[i][#basis]:i in [1..#basis-1]];
+          if flag then
+            for v4 in vec_len[norms[4]] do
+              basis := [v1,v2,v3,v4];
+              flag  := &and[(basis[i],v4) eq G_L[i][#basis]:i in [1..#basis-1]];
+              if flag then
+                for v5 in vec_len[norms[5]] do
+                  basis := [v1,v2,v3,v4,v5];
+                  flag  := &and[(basis[i],v5) eq G_L[i][#basis]:i in [1..#basis-1]];
+                  if flag then
+                    for v6 in vec_len[norms[6]] do
+                      basis := [v1,v2,v3,v4,v5,v6];
+                      flag  := &and[(basis[i],v6) eq G_L[i][#basis]:i in [1..#basis-1]];
+                      if flag then
+                        if is_primitive(NL,basis) then
+                          return basis;
+                        end if;
+                      end if;
+                    end for;
+                  end if;
+                end for;
+              end if;
+            end for;
+          end if;
+        end for;
+      end if;
+    end for;
+  end for;
+
+  return "FAIL";
+
+end /* safe */ function;
+
+
+print "\n>>> Embed of T0 into all possible Niemeier lattices ...";
+for i in [1..24] do
+  print i,embed_into_Niemeier(T0,N[i]);
+end for;
+
+
+/*
 //-----------------------------------------------------
 // NS(S3) ... from picard_group.m ...
 G_S3 := Matrix(Integers(),20,20,
@@ -199,9 +471,8 @@ print "  sign.     =", signature(GramMatrix(NS_S3));
 A_S3, map_S3 := DualQuotient(NS_S3);
 print "  disc. gp. =", A_S3;
 
-
 //-----------------------------------------------------
-// Putative Transcendental lattices ...
+// Putative Transcendental lattices ... corresponding to NS_S3
 T1 := LatticeWithGram(Matrix(Integers(),2,2,[2,0,0,24]));
 T2 := LatticeWithGram(Matrix(Integers(),2,2,[4,0,0,12]));
 T3 := LatticeWithGram(Matrix(Integers(),2,2,[8,4,4,8]));
@@ -218,38 +489,203 @@ T := [T1,T2,T3,T4];
 [SmithForm(GramMatrix(T)) : T in [T1,T2,T3,T4]];
 [DualQuotient(T) : T in [T1,T2,T3,T4]];
 
-// Since q_NS = - q_T ... we need to compute the quadratic form 
-//                        to decide which is correct
-
-A_N,B_N,rho_N := DualQuotient(NS_S3);
-q_N := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho_N) >;
-
-A_T1,B_T1,rho_T1 := DualQuotient(T1);
-A_T2,B_T2,rho_T2 := DualQuotient(T2);
-A_T3,B_T3,rho_T3 := DualQuotient(T3);
-A_T4,B_T4,rho_T4 := DualQuotient(T4);
-
-q_T1 := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho_T1) >;
-q_T2 := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho_T2) >;
-q_T3 := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho_T3) >;
-q_T4 := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho_T4) >;
-
-{* -q_N(x) : x in A_N *};
-
-{* q_T1(x) : x in A_T1 *};
-{* q_T2(x) : x in A_T2 *};
-{* q_T3(x) : x in A_T3 *};
-{* q_T4(x) : x in A_T4 *};
-
-
-{* -q_N(x) : x in A_N *} eq {* q_T1(x) : x in A_T1 *};
-
-{* -q_N(x) : x in A_N *} eq {* q_T2(x) : x in A_T2 *}; //WOO HOO
-
-{* -q_N(x) : x in A_N *} eq {* q_T3(x) : x in A_T3 *};
-
-{* -q_N(x) : x in A_N *} eq {* q_T4(x) : x in A_T4 *};
+// Since q_NS = -q_T ... we need to compute the quadratic form
+//                       to decide which is correct
 
 
 
+//-----------------------------------------------------
+// Compute the Automorphism Group of the Neron-Severi lattice !!!!!!!!!
+Attach("AutHyp.m");
 
+test_AutHyp := function()
+  print "=================================================\n";
+  eg := SymmetricMatrix([2,3,3,1,1,4]);
+  time pp := GetPerfectPoints(eg);
+  print "Trivial ... ", pp`AutGrp;
+
+  print "=================================================\n";
+  time pp := GetPerfectPoints(GramMatrix(U2 @ A(1)));
+  print "Aut( U2 (+) A1 ) ... ", pp`AutGrp;
+
+  print "=================================================\n";
+  time pp := GetPerfectPoints(GramMatrix(U2 @ A(2)));
+  print "Aut( U2 (+) A2 ) ... ", pp`AutGrp;
+
+  print "=================================================\n";
+  time pp := GetPerfectPoints(GramMatrix(U2 @ A(3)));
+  print "Aut( U2 (+) A3 ) ... ", pp`AutGrp;
+
+  //print "=================================================\n";
+  //time pp := GetPerfectPoints(GramMatrix(U2 @ E8));
+  //print "Aut( U2 (+) E8 ) ... ", pp`AutGrp;     // doh ... consumed 8GB
+
+  //print "=================================================\n";
+  //pp := GetPerfectPoints(-GramMatrix(NS_S3)); // doh ... consumed 8GB
+  //print "Real thing ... ", pp`AutGrp;
+
+  return "DONE";
+end /* safe */ function;
+//test_AutHyp();
+
+
+U3 := Oplus(U2,Oplus(U2,U2));
+U3two := LatticeWithGram(2*GramMatrix(U3) : CheckPositive := false);
+
+
+vectors_in_U3_length := function(n,L)
+  B := Basis(U3);
+  list_n := [];
+  vecs_n := [];
+  for a in [-L..L] do
+  for b in [-L..L] do
+  for c in [-L..L] do
+      for d in [-L..L] do
+  for e in [-L..L] do
+  for f in [-L..L] do
+    v := a*B[1]+b*B[2]+c*B[3]+d*B[4]+e*B[5]+f*B[6];
+    if (v,v) eq n then
+      Append(~list_n,[a,b,c,d,e,f]);
+      Append(~vecs_n,v);
+    end if;
+  end for;
+  end for;
+  end for;
+  end for;
+  end for;
+  end for;
+  return list_n,vecs_n;
+end /* safe */ function;
+
+
+vectors_in_U3two_length := function(n,L)
+  B := Basis(U3two);
+  list_n := [];
+  vecs_n := [];
+  for a in [-L..L] do
+  for b in [-L..L] do
+  for c in [-L..L] do
+      for d in [-L..L] do
+  for e in [-L..L] do
+  for f in [-L..L] do
+    v := a*B[1]+b*B[2]+c*B[3]+d*B[4]+e*B[5]+f*B[6];
+    if (v,v) eq n then
+      Append(~list_n,[a,b,c,d,e,f]);
+      Append(~vecs_n,v);
+    end if;
+  end for;
+  end for;
+  end for;
+  end for;
+  end for;
+  end for;
+  return list_n,vecs_n;
+end /* safe */ function;
+
+embed_into_U3 := function(N,n)
+  diag := Diagonal(N);
+  list := AssociativeArray(Integers());
+  vecs := AssociativeArray(Integers());
+  for d in diag do
+    if n eq 1 then
+      ls,vs   := vectors_in_U3_length(d,2);
+    elif n eq 2 then
+      ls,vs   := vectors_in_U3two_length(d,2);
+    end if;
+    vecs[d] := vs;
+    list[d] := ls;
+  end for;
+
+// i1 up to 561
+  for i1 in [1..#vecs[diag[1]]] do
+    v1 := vecs[diag[1]][i1];
+    for i2 in [1..#vecs[diag[2]]] do
+      v2 := vecs[diag[2]][i2];
+      if (v1,v2) eq N[1,2] then
+        for i3 in [1..#vecs[diag[3]]] do
+          v3 := vecs[diag[3]][i3];
+          if (v1,v3) eq N[1,3] and (v2,v3) eq N[2,3] then
+            for i4 in [1..#vecs[diag[4]]] do
+              v4 := vecs[diag[4]][i4];
+              if (v1,v4) eq N[1,4] and (v2,v4) eq N[2,4] and (v3,v4) eq N[3,4] then
+                V  := [v1,v2,v3,v4];
+                IPM := Matrix(Integers(),4,4,[(u,v) : u in V, v in V]);
+                if IPM eq N then
+                  l1 := list[diag[1]][i1];
+                  l2 := list[diag[2]][i2];
+                  l3 := list[diag[3]][i3];
+                  l4 := list[diag[4]][i4];
+                  // --- test for primitivity ---
+                  if n eq 1 then
+                    LNSA := sub<U3 | v1,v2,v3,v4 >;
+                    if is_primitive(U3, LNSA) then
+                      print "WOO HOO";
+                      print IPM;
+                      print [v1,v2,v3,v4];
+                      print [l1,l2,l3,l4];
+                      print [i1,i2,i3,i4];
+                      return [l1,l2,l3,l4], [v1,v2,v3,v4];
+                    end if;
+                  elif n eq 2 then
+                    LNSA := sub<U3two | v1,v2,v3,v4 >;
+                    if is_primitive(U3two, LNSA) then
+                      print "WOO HOO";
+                      print IPM;
+                      print [v1,v2,v3,v4];
+                      print [l1,l2,l3,l4];
+                      print [i1,i2,i3,i4];
+                      return [l1,l2,l3,l4], [v1,v2,v3,v4];
+                    end if;
+                  end if;
+                  print "non-primitive embedding : ",i1,i2,IPM, "\n";
+                  return LatticePerp(U3, LNSA);
+                end if; 
+              end if; 
+            end for;
+          end if;
+        end for;
+      end if;
+    end for;
+  end for;
+      
+  return "FAIL",#vecs[diag[1]],#vecs[diag[2]],#vecs[diag[3]],#vecs[diag[4]];
+end /* safe */ function;
+  
+
+M := SymmetricMatrix(Integers(),[-4,0,10,0,-8,10,0,-4,4,4]);
+embed_into_U3(M,1);
+
+// M2 := 2*M; embed_into_U3(M2,2);
+
+B  := Basis(U3);
+v1 :=  2*B[1] - 2*B[2];
+v2 := -3*B[1] - 3*B[2] + B[3] +  B[4] - 8*B[5];
+v3 :=  3*B[1] + 3*B[2] + B[3] +  B[4]; 
+v4 :=                          8*B[4] + 2*B[5] + 2*B[6];
+V  := [v1,v2,v3,v4];
+IPM := Matrix(Integers(),4,4,[(u,v) : u in V, v in V]);
+print IPM;
+
+
+
+M  := Matrix(Integers(),4,4,[2,0,0,0, 0,0,1,2, 0,1,0,-2, 0,2,-2,-2]);
+ls,vs := embed_into_U3(M,1);
+B  := Basis(U3);
+v1 := &+[ls[1][i]*B[i] : i in [1..6]];
+v2 := &+[ls[2][i]*B[i] : i in [1..6]];
+v3 := &+[ls[3][i]*B[i] : i in [1..6]];
+v4 := &+[ls[4][i]*B[i] : i in [1..6]];
+V  := [v1,v2,v3,v4];
+IPM := Matrix(Integers(),4,4,[(u,v) : u in V, v in V]);
+print IPM;
+
+
+
+
+A := LatticePerp(U3, sub<U3 | V>);
+B := Basis(A);
+(B[1],B[1]);
+(B[1],B[2]);
+(B[2],B[2]);
+
+*/
