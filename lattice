@@ -1,0 +1,255 @@
+//-----------------------------------------------------
+// Lattices in magma
+//
+// Aims : Determine if L1 can be embedded into L2
+//        Compute orthogonal complement of T in E8
+//        
+
+
+//-----------------------------------------------------
+// --- define ADE and Leech lattices
+A  := func<n | Lattice("A",n)>;
+D  := func<n | Lattice("D",n)>;
+E  := func<n | Lattice("E",n)>;
+L  := func<n | Lattice("Lambda",n)>; // Leech is n=24
+
+
+//-----------------------------------------------------
+// --- build a lattice w.r.t. abstract basis
+A2 := LatticeWithGram(GramMatrix(A(2)));
+A4 := LatticeWithGram(GramMatrix(A(4)));
+E8  := Lattice(LatticeDatabase(), "E8");
+E8b := LatticeWithGram(GramMatrix(E(8)));
+
+
+//-----------------------------------------------------
+// --- related lattices, dual, discriminant group
+print "A4*    = ", DualBasisLattice(A4);
+DQ := DualQuotient(A4);
+print "A4*/A4 = ", DQ; 
+
+
+//-----------------------------------------------------
+// --- compose positive definite lattices
+L1 := DirectSum(A4,E8);
+L2 := OrthogonalSum(E8,A4);
+flag :=  IsIsometric(L2,L1);
+print "L1 == L2            :", flag;
+
+
+//-----------------------------------------------------
+// --- compose indefinite lattices
+Oplus := function(L,M)
+
+  GL := GramMatrix(L);
+  GM := GramMatrix(M);
+  GL := ChangeRing(GL,Rationals());
+  GM := ChangeRing(GM,Rationals());
+  GS := DirectSum(GL,GM);
+  LoplusM := LatticeWithGram(GS : CheckPositive := false);
+  return LoplusM;
+
+end /* safe */ function;
+
+
+M2 := Matrix(Rationals(),2,2,[0,1,1,0]);
+U2 := LatticeWithGram(M2: CheckPositive := false);
+U2 := ChangeRing(U2,Rationals());
+L1 := Oplus(U2,E8);
+L2 := Oplus(E8,U2);
+//IsIsometric(L1,L2); // FAIL !!!
+print "Det(L1) == Det(L2)  :", Determinant(L1) eq Determinant(L2);
+
+U_3  := Oplus(Oplus(U2,U2),U2);
+E8_2 := Oplus(E8,E8);
+H2   := Oplus(U_3,E8_2);
+
+
+//-----------------------------------------------------
+// --- check if M < L is a primitive sublattice
+is_primitive := function(L,M)
+
+  T := TorsionSubgroup(quo<L|M>);
+  if #T eq 1 then
+    return true;
+  else
+    return false;
+  end if;
+
+end /*safe */ function;
+
+
+//-----------------------------------------------------
+// --- embed 2x2 positive definite matrix into E8
+embed_into_E8 := function(L)
+  
+  // --- compute the sets of vectors of each possible diagonal of GramMatrix(L)
+  norms := [Norm(a) : a in Basis(L)];
+  vec_len := AssociativeArray(Integers());
+  for norm in norms do
+    vecs := ShortVectors(E8,norm);
+    vecs := [v[1] : v in vecs | v[2] eq norm];
+    vec_len[norm] := vecs;
+  end for;
+  
+  // --- exhaust over each diagonal list
+  for v1 in vec_len[norms[1]] do
+    for v2 in vec_len[norms[2]] do
+      basis := [v1,v2];
+      if InnerProduct(v1,v2) eq GramMatrix(L)[1][2] then
+        if is_primitive(E8,basis) then
+          return basis;
+        end if;
+      end if;
+    end for;
+  end for;
+
+  return "FAIL";
+
+end /* safe */ function;
+
+
+//-----------------------------------------------------
+// --- compute the orthogonal complement  (MJS)
+LatticePerp := function(L, S)
+  P := sub< L | Basis(NullspaceOfTranspose(Matrix(                      
+                [[ (v,s) : v in Basis(L) ] : s in Basis(S) ]))) >;
+  B := Basis(S) cat Basis(P);
+  return P, Matrix([[(u,v):u in B] : v in B]);
+end /* safe */ function;
+
+
+//-----------------------------------------------------
+// --- Embed T := T_{S3} into E8
+//
+T := LatticeWithGram(Matrix(Rationals(),2,2,[4,0,0,12]));
+print "T_X = ", GramMatrix(T);
+T2   := embed_into_E8(T);
+print "Gram(T) == Gram(T2) :",GramMatrix(sub<E8|T2>) eq GramMatrix(T); // sanity check
+
+
+// --- T0 == Orthogonal complement of T_{S3} in E8
+T2   := sub<E8 | T2>;
+T0   := LatticePerp( E8, T2 );
+print "Det(T2) == Det(T0)  :", Determinant(T2) eq Determinant(T0);
+
+
+// --- Did we get A2 (+) A3 (+) <4> 
+A2A3   := Oplus(A(2),A(3));
+L      := LatticeWithGram(Matrix(Rationals(),1,1,[4]) : CheckPositive := false);
+A2A3_4 := Oplus(A2A3,L);
+flag   := IsIsometric(T0,A2A3_4);
+print "A2A3<4> == T0       :", flag; // Yes we did !
+
+
+//-----------------------------------------------------
+// What is the signature a matrix
+signature := function(M)
+  M1 := ChangeRing(M, RealField());
+  evals := Eigenvalues(M1);
+  r_p := 0;
+  r_n := 0;
+  for e in evals do
+    if Sign(e[1]) gt 0 then
+      r_p := r_p + e[2];
+    elif Sign(e[1]) lt 0 then
+      r_n := r_n + e[2];
+    end if;
+  end for;
+  return [r_p,r_n];
+end /* safe */ function;
+
+print "signature(H2) = (#+, #-) = ",signature(GramMatrix(H2));
+
+
+//-----------------------------------------------------
+// NS(S3) ... from picard_group.m ...
+G_S3 := Matrix(Integers(),20,20,
+ [
+  [-2, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+  [ 0,-2, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+  [ 1, 0,-2, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+  [ 0, 1, 0,-2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+  [ 1, 1, 0, 0,-2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+  [ 1, 1, 0, 0, 0,-2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+  [ 0, 0, 1, 1, 1, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+  [ 0, 0, 1, 1, 0, 1, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+  [ 1, 0, 0, 0, 0, 0, 0, 0,-2, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
+  [ 0, 1, 0, 0, 0, 0, 0, 0, 0,-2, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
+  [ 0, 0, 1, 0, 0, 0, 0, 0, 1, 0,-2, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+  [ 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0],
+  [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-2, 0, 1, 1, 1, 0, 0, 0],
+  [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,-2, 0, 1, 0, 0, 0, 0],
+  [ 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0,-2, 0, 0, 0, 0, 1],
+  [ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0,-2, 0, 1, 1, 1],
+  [ 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0,-2, 0, 0, 0],
+  [ 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0,-2, 0, 0],
+  [ 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0,-2, 1],
+  [ 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,-2]
+ ]
+);
+
+NS_S3 := LatticeWithGram(G_S3 : CheckPositive := false );
+
+print "\n-----------------------------------------------";
+print "NS_S3 ... ";
+print "  rank      =", Rank(NS_S3);
+print "  det.      =", Determinant(NS_S3);
+print "  sign.     =", signature(GramMatrix(NS_S3));
+A_S3, map_S3 := DualQuotient(NS_S3);
+print "  disc. gp. =", A_S3;
+
+
+//-----------------------------------------------------
+// Putative Transcendental lattices ...
+T1 := LatticeWithGram(Matrix(Integers(),2,2,[2,0,0,24]));
+T2 := LatticeWithGram(Matrix(Integers(),2,2,[4,0,0,12]));
+T3 := LatticeWithGram(Matrix(Integers(),2,2,[8,4,4,8]));
+T4 := LatticeWithGram(Matrix(Integers(),2,2,[6,0,0,8]));
+
+print "\n-----------------------------------------------";
+print "Putative T_S3 : ...";
+T := [T1,T2,T3,T4];
+[IsIsometric(T[i],T[j]) : j in [i+1..4], i in [1..3] | i ne j];
+
+[Rank(GramMatrix(T)) : T in [T1,T2,T3,T4]];
+[Determinant(GramMatrix(T)) : T in [T1,T2,T3,T4]];
+[signature(GramMatrix(T)) : T in [T1,T2,T3,T4]];
+[SmithForm(GramMatrix(T)) : T in [T1,T2,T3,T4]];
+[DualQuotient(T) : T in [T1,T2,T3,T4]];
+
+// Since q_NS = - q_T ... we need to compute the quadratic form 
+//                        to decide which is correct
+
+A_N,B_N,rho_N := DualQuotient(NS_S3);
+q_N := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho_N) >;
+
+A_T1,B_T1,rho_T1 := DualQuotient(T1);
+A_T2,B_T2,rho_T2 := DualQuotient(T2);
+A_T3,B_T3,rho_T3 := DualQuotient(T3);
+A_T4,B_T4,rho_T4 := DualQuotient(T4);
+
+q_T1 := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho_T1) >;
+q_T2 := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho_T2) >;
+q_T3 := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho_T3) >;
+q_T4 := func< x | z - 2*Truncate(z/2) where z is Norm(x @@ rho_T4) >;
+
+{* -q_N(x) : x in A_N *};
+
+{* q_T1(x) : x in A_T1 *};
+{* q_T2(x) : x in A_T2 *};
+{* q_T3(x) : x in A_T3 *};
+{* q_T4(x) : x in A_T4 *};
+
+
+{* -q_N(x) : x in A_N *} eq {* q_T1(x) : x in A_T1 *};
+
+{* -q_N(x) : x in A_N *} eq {* q_T2(x) : x in A_T2 *}; //WOO HOO
+
+{* -q_N(x) : x in A_N *} eq {* q_T3(x) : x in A_T3 *};
+
+{* -q_N(x) : x in A_N *} eq {* q_T4(x) : x in A_T4 *};
+
+
+
+
