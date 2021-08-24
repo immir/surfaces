@@ -26,13 +26,17 @@ intrinsic LatticePerp (L, S) -> {} {}
 end intrinsic;
 
 intrinsic '@' (A::Lat, B::Lat) -> {} {}
-  a := Rank(A);
-  n := Rank(A) + Rank(B);
-  M := ZeroMatrix(Integers(), n,n);
-  InsertBlock(~M, GramMatrix(A), 1,1);
-  InsertBlock(~M, GramMatrix(B), a+1,a+1);
-  return LatticeWithGram(M : CheckPositive := false);
+  return LatticeWithGram(DirectSum(GramMatrix(A),
+                                   GramMatrix(B))
+                         : CheckPositive := false);
 end intrinsic;
+
+intrinsic CoxeterNumber (L::Lat) -> {} {}
+  return #ShortVectors(L,2)*5/60;
+end intrinsic;
+
+
+
 
 
 // ----------------------------------------------------------------------
@@ -341,17 +345,19 @@ intrinsic Cubics(PX::Sch :
 
   for i in [1..n-1], j in [i+1..n] do
 
+    vprint Surf,1: "i,j = ", i,j;
+
     pivs := SetToSequence({1..n} diff {i,j});
     ni := #{p : p in pivs | p lt i };
     nj := #{p : p in pivs | p lt j };
     nk := #pivs;
-    nvars := ni + nj + nk + 10 + 2;
+    nvars := ni + nj + nk + 10 + 2 + 1;
 
-AA<q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,x0,y0> := PolynomialRing(F, nvars, "grevlexw", [3^^10, 2^^2, 4^^(ni+nj+nk)]);
+    AA<q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,x0,y0,Z> := PolynomialRing(F, nvars, "grevlex");
 
-    vi := [ AA.(12+i)       : i in [1..ni]];
-    vj := [ AA.(12+ni+i)    : i in [1..nj]];
-    vk := [ AA.(12+ni+nj+i) : i in [1..nk]];
+    vi := [ AA.(13+i)       : i in [1..ni]];
+    vj := [ AA.(13+ni+i)    : i in [1..nj]];
+    vk := [ AA.(13+ni+nj+i) : i in [1..nk]];
 
     RR<t> := PolynomialRing(AA);
 
@@ -378,12 +384,16 @@ AA<q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,x0,y0> := PolynomialRing(F, nvars, "grevlexw",
     f := func<x,y | 
       q1*x^3 + q2*x^2*y + q3*x*y^2 + q4*y^3 +
       q5*x^2 + q6*x*y + q7*y^2 +
-      q8*x + q9*y + q10 >;
+      q8*x + q9*y + 
+      q10 >;
     
     eqns_t := [ Evaluate(e,v) : e in eqns_X ] 
       cat [ f(v[i],v[j]),
+            f(x0,y0),
             Derivative(f(x0,y0),x0),
             Derivative(f(x0,y0),y0) ];
+
+    eqns_t cat:= [ (q1*q3 - q2*q4)*Z - 1 ];
 
     eqns := &cat [ Eltseq(Numerator(e)) : e in eqns_t ];
 
@@ -426,13 +436,14 @@ AA<q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,x0,y0> := PolynomialRing(F, nvars, "grevlexw",
       // perhaps keep track seqs of <l, coeff[l]> pairs for
       // H.l * coeff[l] for the equations
 
-/*      time H.i * Eltseq(pt)[4];
+      /*
+      time H.i * Eltseq(pt)[4];
       time H.i * Evaluate(G[r][i], pt);
       time H.j * Evaluate(G[r][j], pt);
       time H.k * Evaluate(G[r][k], pt);
-*/
+      */
 
-/* build the equations more explicitly...!?!?! */
+      /* build the equations more explicitly...!?!?! */
 
       solutions join:= {
            [ H.p - H.i     * Evaluate(G[r][i],   pt)
