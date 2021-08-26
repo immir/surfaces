@@ -253,16 +253,21 @@ A := AutomorphismGroup(G_T);
 pi := PermutationRepresentation(A);
 
 // inner product on G_T:
-M := Matrix([[ (G_T.i @@ phi, G_T.j @@ phi) : i in [1,2]] : j in [1,2]]);
+//M := Matrix([[ (G_T.i @@ phi, G_T.j @@ phi) : i in [1,2]] : j in [1,2]]);
+
+mod2 := func< x | x - 4*Floor(x/4) >;
+spectrum := {* mod2((x @@ phi,y @@ phi)) : x,y in G_T *};
 
 print "Can we find an isomorphism preserving the form?";
 found := false;
 for p in Image(pi) do
   rr := (p @@ pi) * rho;
   // inner products of images of G_T in G_T0
-  M0 := Matrix([[ (rr(G_T.i) @@ phi0, rr(G_T.j) @@ phi0)
-                : i in [1,2]] : j in [1,2]]);
-  if M eq M0 then
+  // M0 := Matrix([[ (rr(G_T.i) @@ phi0, rr(G_T.j) @@ phi0)
+  //              : i in [1,2]] : j in [1,2]]);
+  spectrum0 := {* mod2(-(rr(x) @@ phi0,rr(y) @@ phi0)) : x,y in G_T *};
+
+  if spectrum eq spectrum0 then
     print "found an isomorphism using perm:", p;
     found := true;
   end if;
@@ -273,7 +278,7 @@ if not found then
   print "// we get nothing //";
 end if;
 
-//assert false cmpeq "aborting at this point";
+assert false cmpeq "aborting at this point";
 
 
 //-----------------------------------------------------
@@ -525,7 +530,7 @@ test_AutHyp := function()
   //print "Real thing ... ", pp`AutGrp;
 
   return "DONE";
-end /* safe */ function;
+end function;
 //test_AutHyp();
 
 
@@ -555,7 +560,7 @@ vectors_in_U3_length := function(n,L)
   end for;
   end for;
   return list_n,vecs_n;
-end /* safe */ function;
+end function;
 
 
 vectors_in_U3two_length := function(n,L)
@@ -580,7 +585,7 @@ vectors_in_U3two_length := function(n,L)
   end for;
   end for;
   return list_n,vecs_n;
-end /* safe */ function;
+end function;
 
 embed_into_U3 := function(N,n)
   diag := Diagonal(N);
@@ -649,7 +654,7 @@ embed_into_U3 := function(N,n)
   end for;
       
   return "FAIL",#vecs[diag[1]],#vecs[diag[2]],#vecs[diag[3]],#vecs[diag[4]];
-end /* safe */ function;
+end function;
   
 
 M := SymmetricMatrix(Integers(),[-4,0,10,0,-8,10,0,-4,4,4]);
