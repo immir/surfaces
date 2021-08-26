@@ -38,6 +38,7 @@ print "A4*/A4 = ", DQ;
 // --- compose positive definite lattices
 L1 := DirectSum(A4,E8);
 L2 := OrthogonalSum(E8,A4);
+E8E8 := OrthogonalSum(E8,E8);
 flag :=  IsIsometric(L2,L1);
 print "L1 == L2            :", flag;
 
@@ -85,8 +86,82 @@ end /*safe */ function;
 
 
 //-----------------------------------------------------
+// Compute all the images of q_T : G_T --> Q;
+//                                  x  |-> (x,x) mod 2Z
+//
+discriminant_form_images := function(T)
+
+  G_T,Lx,phi    := DualQuotient(T);
+
+  vec_val_list  := [];
+  values   := [];
+  for g in G_T do
+    vec := g @@ phi;
+    val := (vec,vec);
+    num := Numerator( val );
+    den := Denominator( val );
+    Append(~vec_val_list, <vec,(num mod (2*den))/den> );
+    Append(~values, (num mod (2*den))/den );
+  end for;
+
+  return Sort(values),Sort(vec_val_list);
+end function;
+
+
+//-----------------------------------------------------
+/* Immir:
+
+   First, DualQuotient(L) can return the quotient group Q together
+   with the "unscaled dual lattice" L^# and "natural epimorphism"
+   phi: L^# -> Q. 
+*/
+have_isometric_disc_gps := function(T,T0)
+
+  G_T,Lx,phi    := DualQuotient(T);
+  G_T0,Lx0,phi0 := DualQuotient(T0);
+
+  /* G_T and G_T0 are isomorphic as abelian groups, but since
+     #Aut(G_T) = 192, there are 192 different isomorphisms between
+     them (for any given isomorphism, one can compose with an
+     automorphism to get another).
+
+     So, we can ask Magma for a given isomorphism: 
+  */
+
+  _,rho := IsIsomorphic(G_T, G_T0);
+
+  /* But we need the isomorphism to preserve the inner product, so
+     let's check them all...
+     NB: Apparently you cannot iterate over the automorphism group A,
+         so we take a permutation representation for it and iterate
+         over that, mapping back to A using @@
+  */
+
+  A  := AutomorphismGroup(G_T);
+  pi := PermutationRepresentation(A);
+
+  // --- inner product on G_T:
+  M := Matrix([[ (G_T.i @@ phi, G_T.j @@ phi) : i in [1,2]] : j in [1,2]]);
+
+  found := false;
+  for p in Image(pi) do
+    rr := (p @@ pi) * rho;
+    // --- inner products of images of G_T in G_T0
+    M0 := Matrix([[ (rr(G_T.i) @@ phi0, rr(G_T.j) @@ phi0)
+                  : i in [1,2]] : j in [1,2]]);
+    if M eq M0 then
+      print "found an isomorphism using perm:", p;
+      return true;
+    end if;
+  end for;
+  return false;
+end /* safe */ function;
+
+
+//-----------------------------------------------------
 // --- embed 2x2 positive definite matrix into E8
-embed_into_E8 := function(L)
+//
+embed_into_E8 := function(L : NumberOfSolutions := 1)
   
   // --- compute the sets of vectors of each possible diagonal of GramMatrix(L)
   norms := [Norm(a) : a in Basis(L)];
@@ -98,12 +173,22 @@ embed_into_E8 := function(L)
   end for;
   
   // --- exhaust over each diagonal list
+  basis_list := [];
+  count := 0;
   for v1 in vec_len[norms[1]] do
     for v2 in vec_len[norms[2]] do
+      count := count + 1;
       basis := [v1,v2];
       if InnerProduct(v1,v2) eq GramMatrix(L)[1][2] then
         if is_primitive(E8,basis) then
-          return basis;
+          basis_list := basis_list cat [basis];
+          if #basis_list ge NumberOfSolutions then
+            if NumberOfSolutions eq 1 then
+              return basis;
+            else
+              return basis_list;
+            end if;
+          end if;
         end if;
       end if;
     end for;
@@ -169,15 +254,18 @@ end /* safe */ function;
 // --- Embed T := T_{S3} into E8
 //
 T := LatticeWithGram(Matrix(Rationals(),2,2,[4,0,0,12]));
-print "T_X = ", GramMatrix(T);
+print "\n***** Transcendental lattice(S3) ...";
+print "GramMatrix =", GramMatrix(T);
 T2   := embed_into_E8(T);
-print "Gram(T) == Gram(T2) :",GramMatrix(sub<E8|T2>) eq GramMatrix(T); // sanity check
+print "Gram(T)  == Gram(T2)   :",GramMatrix(sub<E8|T2>) eq GramMatrix(T);
 
 
 // --- T0 == Orthogonal complement of T_{S3} in E8
 T2   := sub<E8 | T2>;
 T0   := LatticePerp( E8, T2 );
-print "Det(T2) == Det(T0)  :", Determinant(T2) eq Determinant(T0);
+T0m1 := LatticeWithGram(-GramMatrix(T0) : CheckPositive := false);
+print "Det(T2)  == Det(T0)    :", Determinant(T2) eq Determinant(T0);
+print "Rank(T2) == 8-Rank(T0) :", Rank(T2) eq 8-Rank(T0);
 
 
 // --- Did we get A2 (+) A3 (+) <4> 
@@ -185,100 +273,24 @@ A2A3   := Oplus(A(2),A(3));
 L      := LatticeWithGram(Matrix(Rationals(),1,1,[4]) : CheckPositive := false);
 A2A3_4 := Oplus(A2A3,L);
 flag   := IsIsometric(T0,A2A3_4);
-print "A2A3<4> == T0       :", flag; // Yes we did !
+print "A2A3<4>  == T0         :", flag; // Yes we did !
 
 
 // --- Check conditions (i), (ii), (iii) on page 18 BKW
-print "(i) IsEven(T0)      :", IsEven(T0);
-G0 := GramMatrix(T0);
-print "(ii) signature(T0)  =",signature(G0);
-G_T,  T_star,  f_T   := DualQuotient(T);   // f_T  : T*  --> G_T
-G_T0, T0_star, f_T0  := DualQuotient(T0);  // f_T0 : T0* --> G_T0
-print "(iii) G_T == G_T0   :", IsIsomorphic(G_T, G_T0);
+print "(i)   IsEven(T0)       :", IsEven(T0);
+print "(ii)  signature(T0)    =", signature(GramMatrix(T0));
+print "(iii) Show (G_T, q_T) is isometric to (G_T0[-1], q_T0[-1])";
+G_T    := DualQuotient(T);
+G_T0   := DualQuotient(T0);
+G_T0m1 := DualQuotient(T0m1);
+print "      is_isomorphic(G_T, G_T0[-1])   ?",  IsIsomorphic(G_T,G_T0m1);
 
-print "\n****** We really need to show that (G_T, qf_T) is isometric to (G_T0, qf_T0) !";
+q_T_images    := discriminant_form_images(T);
+q_T0m1_images := discriminant_form_images(T0m1);
 
-// Try this ... Immir
-_, T_T0 := IsIsomorphic(G_T, G_T0); // map : G_T --> G_T0
+print "      images(q_T) == images(q_T0[-1])?", q_T_images eq q_T0m1_images;
 
-q_T  := QuadraticForm(T);
-q_T0 := QuadraticForm(T0);
-
-print "1: ",T_T0(G_T.1) eq G_T0.1; // isomorphic generators
-print "1: ",T_T0(G_T.2) eq G_T0.2; // isomorphic generators
-print "1: ",G_T0.1 @@ T_T0; // preimage
-
-print "2: ",G_T.1 @@ f_T; // preimages
-print "2: ",G_T.2 @@ f_T; // preimages
-print "2: ", Matrix(Rationals(),2,2,[(G_T.i @@ f_T, G_T.j @@ f_T) : i,j in [1..2]]);
-
-print "3: ",G_T0.1 @@ f_T0;
-print "3: ",G_T0.2 @@ f_T0;
-print "3: ", Matrix(Rationals(),2,2,[(G_T0.i @@ f_T0, G_T0.j @@ f_T0) : i,j in [1..2]]);
-
-
-print "4: ", Matrix(Rationals(),2,2,[(T_T0(G_T.i) @@ f_T0, G_T0.j @@ f_T0) : i,j in [1..2]]);
-
-// --- DOH ... We got some 'splainin' to do
-/* Immir:
-
-   First, DualQuotient(L) can return the quotient group Q together
-   with the "unscaled dual lattice" L^# and "natural epimorphism"
-   phi: L^# -> Q. */
-
-G_T,Lx,phi    := DualQuotient(T);
-G_T0,Lx0,phi0 := DualQuotient(T0);
-
-/* G_T and G_T0 are isomorphic as abelian groups, but since
-   #Aut(G_T) = 192, there are 192 different isomorphisms between
-   them (for any given isomorphism, one can compose with an
-   automorphism to get another).
-
-   So, we can ask Magma for a given isomorphism: */
-
-_,rho := IsIsomorphic(G_T, G_T0);
-
-/*
-   But we need the isomorphism to preserve the inner product, so let's
-   check them all...
-
-   NB: Apparently you cannot iterate over the automorphism group A, so
-   we take a permutation representation for it and iterate over that, mapping
-   back to A using @@
-
-*/
-
-
-A := AutomorphismGroup(G_T);
-pi := PermutationRepresentation(A);
-
-// inner product on G_T:
-//M := Matrix([[ (G_T.i @@ phi, G_T.j @@ phi) : i in [1,2]] : j in [1,2]]);
-
-mod2 := func< x | x - 4*Floor(x/4) >;
-spectrum := {* mod2((x @@ phi,y @@ phi)) : x,y in G_T *};
-
-print "Can we find an isomorphism preserving the form?";
-found := false;
-for p in Image(pi) do
-  rr := (p @@ pi) * rho;
-  // inner products of images of G_T in G_T0
-  // M0 := Matrix([[ (rr(G_T.i) @@ phi0, rr(G_T.j) @@ phi0)
-  //              : i in [1,2]] : j in [1,2]]);
-  spectrum0 := {* mod2(-(rr(x) @@ phi0,rr(y) @@ phi0)) : x,y in G_T *};
-
-  if spectrum eq spectrum0 then
-    print "found an isomorphism using perm:", p;
-    found := true;
-  end if;
-end for;
-
-// we get nothing
-if not found then
-  print "// we get nothing //";
-end if;
-
-assert false cmpeq "aborting at this point";
+print "      Are G_T and G_T0[-1] isometric ?",have_isometric_disc_gps(T,T0m1);
 
 
 //-----------------------------------------------------
@@ -326,13 +338,16 @@ D24 := D24 + U24;
 
 N_D24 := LatticeWithGram(D24);
 LDB   := LatticeDatabase();
-print "\n Niemeier lattices ...";
-for i in [1..#LDB] do
-  L := Lattice(LDB,i);
-  if IsEven(L) and Rank(L) eq 24 and Abs(Determinant(L)) eq 1 then
-    print <i,LatticeName(LDB,i)>;
-  end if;
-end for;
+print "\n***** Niemeier lattices ...";
+show_magma_db := function()
+  for i in [1..#LDB] do
+    L := Lattice(LDB,i);
+    if IsEven(L) and Rank(L) eq 24 and Abs(Determinant(L)) eq 1 then
+      print <i,LatticeName(LDB,i)>;
+    end if;
+  end for;
+end /* safe */ function;
+// show_magma_db();
 
 print "Add in the one missing in magma, and the Leech lattice ...";
 N := [N_D24] cat [Lattice(LDB,i) : i in [448 .. 469]] cat [LL(24)];
@@ -374,8 +389,6 @@ NL := func< str | Lattice(LDB, BKW_Table1[str])>;
 N[12] eq NL("rho"); // *sigh* need to fix alpha since it is not in Magma DB!
 
 
-
-
 //-----------------------------------------------------
 // --- embed 6x6 positive definite matrix into a Niemeier lattice  
 //
@@ -389,6 +402,7 @@ embed_into_Niemeier := function(L,NL)
     vecs := [v[1] : v in vecs | v[2] eq norm];
     vec_len[norm] := vecs;
   end for;
+  print " # vectors =",[#vec_len[norms[i]] : i in [1..6]];
 
   // --- exhaust over each diagonal list
   G_L := GramMatrix(L);
@@ -413,7 +427,7 @@ embed_into_Niemeier := function(L,NL)
                       flag  := &and[(basis[i],v6) eq G_L[i][#basis]:i in [1..#basis-1]];
                       if flag then
                         if is_primitive(NL,basis) then
-                          return basis;
+                          return true,basis;
                         end if;
                       end if;
                     end for;
@@ -427,18 +441,26 @@ embed_into_Niemeier := function(L,NL)
     end for;
   end for;
 
-  return "FAIL";
+  return false,[];
 
 end /* safe */ function;
 
 
-print "\n>>> Embed of T0 into all possible Niemeier lattices ...";
+print "\n>>> Embed T0 into all possible Niemeier lattices ...";
 for i in [1..24] do
-  print i,embed_into_Niemeier(T0,N[i]);
+  print "Niemeier#",i;
+  flag,B := embed_into_Niemeier(T0,N[i]);
+  print " Has embedding  ?",flag;
+  if flag then
+    G := Matrix(Integers(),6,6,[(B[i],B[j]) : i,j in [1..6]]);
+    is_iso := IsIsometric(LatticeWithGram(G),A2A3_4);
+    print " Is A2A3_4 type ?", is_iso;
+  end if;
 end for;
 
 
-/*
+assert 1 eq 0; // Just STOP here ... 
+
 //-----------------------------------------------------
 // NS(S3) ... from picard_group.m ...
 G_S3 := Matrix(Integers(),20,20,
@@ -475,6 +497,124 @@ print "  det.      =", Determinant(NS_S3);
 print "  sign.     =", signature(GramMatrix(NS_S3));
 A_S3, map_S3 := DualQuotient(NS_S3);
 print "  disc. gp. =", A_S3;
+
+//-----------------------------------------------------
+// Attempt to embed a positive definite lattice of rank <= 16
+// into 2E8
+//
+embed_into_2E8 := function(L,E8E8)
+
+  // --- compute the sets of vectors of each possible diagonal of GramMatrix(L)
+  norms := [Norm(a) : a in Basis(L)];
+  vec_len := AssociativeArray(Integers());
+  for norm in norms do
+    vecs := ShortVectors(E8E8,norm);
+    vecs := [v[1] : v in vecs | v[2] eq norm];
+    vec_len[norm] := vecs;
+  end for;
+
+  // --- exhaust over each diagonal list
+  G_L := GramMatrix(L);
+  for v1 in vec_len[norms[1]] do
+   for v2 in vec_len[norms[2]] do
+    basis := [v1,v2];
+    if InnerProduct(v1,v2) eq G_L[1][2] then
+     for v3 in vec_len[norms[3]] do
+      basis := [v1,v2,v3];
+      flag  := &and[(basis[i],v3) eq G_L[i][#basis]:i in [1..#basis-1]];
+      if flag then
+       for v4 in vec_len[norms[4]] do
+        basis := [v1,v2,v3,v4];
+        flag  := &and[(basis[i],v4) eq G_L[i][#basis]:i in [1..#basis-1]];
+        if flag then
+         for v5 in vec_len[norms[5]] do
+          basis := [v1,v2,v3,v4,v5];
+          flag  := &and[(basis[i],v5) eq G_L[i][#basis]:i in [1..#basis-1]];
+          if flag then
+           for v6 in vec_len[norms[6]] do
+            basis := [v1,v2,v3,v4,v5,v6];
+            flag  := &and[(basis[i],v6) eq G_L[i][#basis]:i in [1..#basis-1]];
+            if flag then
+             for v7 in vec_len[norms[7]] do
+              basis := [v1,v2,v3,v4,v5,v6,v7];
+              flag  := &and[(basis[i],v7) eq G_L[i][#basis]:i in [1..#basis-1]];
+              if flag then
+               for v8 in vec_len[norms[8]] do
+                basis := [v1,v2,v3,v4,v5,v6,v7,v8];
+                flag  := &and[(basis[i],v8) eq G_L[i][#basis]:i in [1..#basis-1]];
+                if flag then
+                 for v9 in vec_len[norms[9]] do
+                  basis := [v1,v2,v3,v4,v5,v6,v7,v8,v9];
+                  flag  := &and[(basis[i],v9) eq G_L[i][#basis]:i in [1..#basis-1]];
+                  if flag then
+                   for v10 in vec_len[norms[10]] do
+                    basis := [v1,v2,v3,v4,v5,v6,v7,v8,v9,v10];
+                    flag  := &and[(basis[i],v10) eq G_L[i][#basis]:i in [1..#basis-1]];
+                    if flag then
+                     for v11 in vec_len[norms[11]] do
+                      basis := [v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11];
+                      flag  := &and[(basis[i],v11) eq G_L[i][#basis]:i in [1..#basis-1]];
+                      if flag then
+                       for v12 in vec_len[norms[12]] do
+                        basis := [v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12];
+                        flag  := &and[(basis[i],v12) eq G_L[i][#basis]:i in [1..#basis-1]];
+                        if flag then
+                         for v13 in vec_len[norms[13]] do
+                          basis := [v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13];
+                          flag  := &and[(basis[i],v13) eq G_L[i][#basis]:i in [1..#basis-1]];
+                          if flag then
+                           for v14 in vec_len[norms[14]] do
+                            basis := [v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14];
+                            flag  := &and[(basis[i],v14) eq G_L[i][#basis]:i in [1..#basis-1]];
+                            if flag then
+                             for v15 in vec_len[norms[15]] do
+                              basis := [v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15];
+                              flag  := &and[(basis[i],v15) eq G_L[i][#basis]:i in [1..#basis-1]];
+                              if flag then
+                               for v16 in vec_len[norms[16]] do
+                                basis := [v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16];
+                                flag  := &and[(basis[i],v16) eq G_L[i][#basis]:i in [1..#basis-1]];
+                                if flag then
+                                 if is_primitive(E8E8,basis) then
+                                  return basis;
+                                 end if;
+                                end if;
+                               end for;
+                              end if;
+                             end for;
+                            end if;
+                           end for;
+                          end if;
+                         end for;
+                        end if;
+                       end for;
+                      end if;
+                     end for;
+                    end if;
+                   end for;
+                  end if;
+                 end for;
+                end if;
+               end for;
+              end if;
+             end for;
+            end if;
+           end for;
+          end if;
+         end for;
+        end if;
+       end for;
+      end if;
+     end for;
+    end if;
+   end for;
+  end for;
+
+  return "FAIL";
+
+end /* safe */ function;
+
+
 
 //-----------------------------------------------------
 // Putative Transcendental lattices ... corresponding to NS_S3
@@ -530,7 +670,7 @@ test_AutHyp := function()
   //print "Real thing ... ", pp`AutGrp;
 
   return "DONE";
-end function;
+end /* safe */ function;
 //test_AutHyp();
 
 
@@ -560,7 +700,7 @@ vectors_in_U3_length := function(n,L)
   end for;
   end for;
   return list_n,vecs_n;
-end function;
+end /* safe */ function;
 
 
 vectors_in_U3two_length := function(n,L)
@@ -585,7 +725,7 @@ vectors_in_U3two_length := function(n,L)
   end for;
   end for;
   return list_n,vecs_n;
-end function;
+end /* safe */ function;
 
 embed_into_U3 := function(N,n)
   diag := Diagonal(N);
@@ -654,7 +794,7 @@ embed_into_U3 := function(N,n)
   end for;
       
   return "FAIL",#vecs[diag[1]],#vecs[diag[2]],#vecs[diag[3]],#vecs[diag[4]];
-end function;
+end /* safe */ function;
   
 
 M := SymmetricMatrix(Integers(),[-4,0,10,0,-8,10,0,-4,4,4]);
