@@ -285,18 +285,11 @@ LatticePerp := function(L, S)
   NOT := NullspaceOfTranspose(Matrix(
                 [[ (v,s) : v in Basis(L) ] : s in Basis(S) ]));
 
-  if BaseRing(NOT) eq Integers() then
-    P := sub< L | Basis(NullspaceOfTranspose(Matrix(                      
-                [[ (v,s) : v in Basis(L) ] : s in Basis(S) ]))) >;
-    B := Basis(S) cat Basis(P);
-    return P, Matrix([[(u,v):u in B] : v in B]);
-  else
-    print "------------------------>PERP FAIL",BaseRing(NOT);
-    // I guess one could carry a denominator around and
-    // an integer basis ... then perp that and put the
-    // denominator back.
-    return L,GramMatrix(L);
-  end if;
+  P := sub< L | BasisMatrix(NullspaceOfTranspose(Matrix(                    
+              [[ (v,s) : v in Basis(L) ] : s in Basis(S) ]))) 
+              * BasisMatrix(L) >;
+  B := Basis(S) cat Basis(P);
+  return P, Matrix([[(u,v):u in B] : v in B]);
 
 end /* safe */ function;
 
@@ -506,7 +499,7 @@ for i in [1..24] do
 end for;
 
 
-assert 1 eq 0; // Just STOP here ... 
+//assert 1 eq 0; // Just STOP here ... 
 
 
 //-----------------------------------------------------
